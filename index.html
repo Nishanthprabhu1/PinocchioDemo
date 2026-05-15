@@ -46,13 +46,16 @@
     html { scroll-behavior: smooth; }
 
     body {
-      background-color: var(--washi);
-      background-image:
-        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-      font-family: 'Noto Sans JP', sans-serif;
-      color: var(--ink);
-      min-height: 100svh;
-    }
+      background:
+linear-gradient(
+  180deg,
+  #3f0d14 0%,
+  #5b111b 30%,
+  #701826 60%,
+  #3a0d12 100%
+);
+
+color: #f3e8d7;
 
     /* ── SEIGAIHA (wave) PATTERN SVG ── */
     .seigaiha-bg {
@@ -212,7 +215,7 @@ linear-gradient(
     /* ── TABS ── */
     .tabs-wrap {
       position: sticky; top: 0; z-index: 100;
-      background: var(--washi);
+      background: rgba(243,232,215,0.95);
       border-bottom: 1px solid rgba(139,26,26,0.2);
       padding: 0 1rem;
     }
@@ -268,6 +271,7 @@ linear-gradient(
       border-radius: 50%;
       animation: spin 0.9s linear infinite;
       margin: 0 auto 1rem;
+      background: transparent;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
     .state-box p { font-size: 13px; font-family: 'Noto Serif JP', serif; letter-spacing: 2px; }
@@ -280,7 +284,7 @@ linear-gradient(
       font-size: 11px;
       letter-spacing: 4px;
       text-transform: uppercase;
-      color: var(--crimson);
+      color: #f0d2a0;
     }
     .section-label span {
       flex: 1; height: 1px;
@@ -297,8 +301,8 @@ linear-gradient(
     .items-grid { display: flex; flex-direction: column; gap: 10px; }
 
     .menu-card {
-      background: rgba(255,248,238,0.92);
-      border: 1px solid rgba(139,26,26,0.12);
+      background: rgba(243,232,215,0.96);
+      border: 1px solid rgba(214,178,126,0.18);
       border-left: 3px solid transparent;
       border-radius: 1px;
       padding: 1.1rem 1.25rem;
@@ -577,7 +581,8 @@ linear-gradient(
       text-align: center;
       padding: 1.8rem 1rem;
       font-size: 11px; letter-spacing: 2px;
-      color: var(--ink-faint);
+      background: rgba(20,8,8,0.55);
+      color: #d8b98e;
       border-top: 1px solid rgba(139,26,26,0.15);
       line-height: 2;
       font-family: 'Noto Serif JP', serif;
