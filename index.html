@@ -16,25 +16,31 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    :root {
-      --washi:       #f5ede0;
-      --washi-dark:  #ede0cc;
-      --washi-deep:  #e0cdb0;
-      --ink:         #1c1108;
-      --ink-mid:     #3d2b14;
-      --ink-light:   #6b5236;
-      --ink-faint:   #9a7d5a;
-      --crimson:     #8b1a1a;
-      --crimson-mid: #b52020;
-      --crimson-lt:  #d4534a;
-      --gold:        #9a7820;
-      --gold-lt:     #c4a030;
-      --gold-pale:   #e8d080;
-      --sage:        #4a6741;
-      --sage-lt:     #d8eac8;
-      --shadow-ink:  rgba(28,17,8,0.12);
-      --shadow-deep: rgba(28,17,8,0.22);
-    }
+    :root:root {
+
+  --washi:       #efe2cf;
+  --washi-dark:  #e2d1b8;
+  --washi-deep:  #d4bea0;
+
+  --ink:         #2c120f;
+  --ink-mid:     #4e231b;
+  --ink-light:   #7b5647;
+  --ink-faint:   #a07d69;
+
+  --crimson:     #8d1d2d;
+  --crimson-mid: #a32133;
+  --crimson-lt:  #c74456;
+
+  --gold:        #c39a5c;
+  --gold-lt:     #ddb777;
+  --gold-pale:   #f1d7a4;
+
+  --sage:        #567a47;
+  --sage-lt:     #dce9d0;
+
+  --shadow-ink:  rgba(44,18,15,0.14);
+  --shadow-deep: rgba(44,18,15,0.24);
+}
 
     /* ── WASHI TEXTURE BACKGROUND ── */
     html { scroll-behavior: smooth; }
@@ -62,7 +68,13 @@
       position: relative;
       overflow: hidden;
       background:
-        linear-gradient(175deg, #1c1108 0%, #2e1c0e 45%, #1c1108 100%);
+linear-gradient(
+  145deg,
+  #3d0f13 0%,
+  #5e121a 40%,
+  #7b1824 70%,
+  #3d0f13 100%
+);
       color: #f5ede0;
       text-align: center;
       padding: max(env(safe-area-inset-top), 2.5rem) 1rem 2.5rem;
@@ -285,7 +297,7 @@
     .items-grid { display: flex; flex-direction: column; gap: 10px; }
 
     .menu-card {
-      background: rgba(255,252,245,0.7);
+      background: rgba(255,248,238,0.92);
       border: 1px solid rgba(139,26,26,0.12);
       border-left: 3px solid transparent;
       border-radius: 1px;
@@ -431,7 +443,7 @@
     .modal-overlay.open { display: flex; }
 
     .modal-card {
-      background: var(--washi);
+      background: #f3e8d7;
       border-top: 3px solid var(--crimson);
       width: 100%; max-width: 520px;
       max-height: 92svh;
@@ -903,7 +915,12 @@ function catLabel(cat) {
 }
 
 function renderTabs() {
-  const cats = ['all', ...new Set(allDishes.map(d => d.category))];
+  const cats = [
+    'all',
+    'starter',
+    'main-course',
+    'dessert'
+  ];
   const wrap = document.getElementById('tabs-inner');
   wrap.innerHTML = cats.map(c =>
     `<button class="tab-btn${c === activeCategory ? ' active' : ''}" data-cat="${c}">${catLabel(c)}</button>`
