@@ -1052,12 +1052,13 @@ function loadModelAndAR(d, vw, arBadge, scaleInfo, arBtnWrap, photoWrap) {
 
   const mv = document.createElement('model-viewer');
 
-const scaledUrl = `${d.glbPath}#scale=${d.scale}`;
-
-mv.setAttribute('src', scaledUrl);
+mv.setAttribute('src', d.glbPath);
 
 if (isIOS && d.usdzPath)
   mv.setAttribute('ios-src', d.usdzPath);
+
+const s = d.scale || 1;
+mv.setAttribute('scale', `${s} ${s} ${s}`);
 
   // Scale: applied in 3D preview only. AR uses ar-scale="auto" so Scene Viewer
   // / WebXR auto-fits the model to real-world size from GLTF units — fastest & most accurate.
