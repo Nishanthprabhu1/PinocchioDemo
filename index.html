@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-  <title>Japanese Cuisine — AR Menu</title>
+  <title>Italian Cuisine — AR Menu</title>
   <meta name="description" content="Interactive AR menu for Japanese Cuisine — authentic Japanese cuisine with 3D dish previews." />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -610,7 +610,7 @@
   <div id="language-picker">
     <select id="lang-select">
       <option value="en">English</option>
-      <option value="jp">日本語</option>
+      <option value="it">Italiano</option>
       <option value="kn">ಕನ್ನಡ</option>
       <option value="ta">தமிழ்</option>
       <option value="ml">മലയാളം</option>
@@ -619,9 +619,9 @@
   </div>
 
   <div class="header-mon"></div>
-  <p class="header-kanji">日本料理</p>
-  <h1 class="header-title">Japanese Cuisine</h1>
-  <span class="header-title-jp">日本料理</span>
+  <p class="header-kanji">Cucina Italiana</p>
+  <h1 class="header-title">Italian Cuisine</h1>
+  <span class="header-title-jp">Cucina Italiana</span>
   <div class="brush-divider"></div>
   <p class="header-sub" id="ui-sub-tag">Authentic Japanese Cuisine</p>
   <span class="ar-badge">
@@ -671,62 +671,194 @@
 
 <script>
 const DISH_IMAGES = {
-  'pistachiosaucebignewithricotta': '3d-model/Pistachio-Sauce-Bigne-with-Ricotta/Pistachio-Sauce-Bigne-with-Ricotta.png',
-  'pinocchiotiramisu': '3d-model/Pinocchio-Tiramisu/Pinocchio-Tiramisu.png',
-  'cheesygreenlasagne': '3d-model/Cheesy-Green-Lasagne/Cheesy-Green-Lasagne.png',
-  'friedcalamari': '3d-model/Fried-Calamari/Fried-Calamari.png',
+  'pistachio-sauce-bigne-with-ricotta':
+    '3d-model/Pistachio-Sauce-Bigne-with-Ricotta/Pistachio-Sauce-Bigne-with-Ricotta.png',
+
+  'pinocchio-tiramisu':
+    '3d-model/Pinocchio-Tiramisu/Pinocchio-Tiramisu.png',
+
+  'cheesy-green-lasagne':
+    '3d-model/Cheesy-Green-Lasagne/Cheesy-Green-Lasagne.png',
+
+  'fried-calamari':
+    '3d-model/Fried-Calamari/Fried-Calamari.png',
 };
 
 const LOCAL_ASSETS = {
-  'pistachiosaucebignewithricotta': {
+  'pistachio-sauce-bigne-with-ricotta': {
     folder: 'Pistachio-Sauce-Bigne-with-Ricotta',
     file: 'Pistachio-Sauce-Bigne-with-Ricotta',
     scale: 0.15
   },
 
-  'pinocchiotiramisu': {
+  'pinocchio-tiramisu': {
     folder: 'Pinocchio-Tiramisu',
     file: 'Pinocchio-Tiramisu',
     scale: 0.15
   },
 
-  'cheesygreenlasagne': {
+  'cheesy-green-lasagne': {
     folder: 'Cheesy-Green-Lasagne',
     file: 'Cheesy-Green-Lasagne',
     scale: 0.15
   },
 
-  'friedcalamari': {
+  'fried-calamari': {
     folder: 'Fried-Calamari',
     file: 'Fried-Calamari',
     scale: 0.15
   }
 };
+
 const ASSETS_BASE = '3d-model';
 
+function normalizeKey(str) {
+  return (str || '')
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .trim();
+}
+
 function getLocalAssets(dishName) {
-  const key = (dishName || '').toLowerCase().trim();
+  const key = normalizeKey(dishName);
   const entry = LOCAL_ASSETS[key];
-  if (!entry) return { posterPath: DISH_IMAGES[key] || '', glbPath: '' };
+
+  if (!entry) {
+    return {
+      posterPath: '',
+      glbPath: '',
+      usdzPath: '',
+      scale: 1
+    };
+  }
+
   const base = `${ASSETS_BASE}/${entry.folder}/${entry.file}`;
+
   return {
-    posterPath: DISH_IMAGES[key] || `${base}.png`,
-    glbPath:    `${base}.glb`,
-    usdzPath:   `${base}.usdz`,
-    scale:      entry.scale,
+    posterPath: `${base}.png`,
+    glbPath: `${base}.glb`,
+    usdzPath: `${base}.usdz`,
+    scale: entry.scale
   };
 }
 
-const SHEET_ID  = '13qUqFoWaIZ9We7U0G0Jy-hEJ_lDswGW55xnZnwcBrDY';
-const SHEET_GID = '0';
-const CSV_URL   = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${SHEET_GID}`;
-
 const EMOJI_MAP = {
-  'pistachiosaucebignewithricotta': '🫕',
-  'pinocchiotiramisu':  '🍜',
-  'cheesygreenlasagne': '🐟',
-  'friedcalamari':   '🍤',
+  'pistachio-sauce-bigne-with-ricotta': '🍮',
+  'pinocchio-tiramisu': '🍰',
+  'cheesy-green-lasagne': '🧀',
+  'fried-calamari': '🦑',
 };
+
+const I18N = {
+  en: {
+    sub: 'Authentic Italian Cuisine',
+    badge: 'Interactive 3D & AR Preview',
+    veg: 'veg',
+    loading: 'Loading...'
+  },
+
+  it: {
+    sub: 'Autentica Cucina Italiana',
+    badge: 'Anteprima Interattiva 3D & AR',
+    veg: 'vegetariano',
+    loading: 'Caricamento...'
+  },
+
+  kn: {
+    sub: 'ಅಧಿಕೃತ ಇಟಾಲಿಯನ್ ಆಹಾರ',
+    badge: '3D ಮತ್ತು AR ಮುನ್ನೋಟ',
+    veg: 'ಸಸ್ಯಾಹಾರಿ',
+    loading: 'ಲೋಡ್ ಆಗುತ್ತಿದೆ...'
+  },
+
+  ta: {
+    sub: 'உண்மையான இத்தாலிய உணவு',
+    badge: '3D மற்றும் AR மாதிரிக்காட்சி',
+    veg: 'சைவம்',
+    loading: 'ஏற்றப்படுகிறது...'
+  },
+
+  ml: {
+    sub: 'ആധികാരിക ഇറ്റാലിയൻ വിഭവങ്ങൾ',
+    badge: '3D & AR പ്രിവ്യൂ',
+    veg: 'വെജ്',
+    loading: 'ലോഡ് ചെയ്യുന്നു...'
+  },
+
+  te: {
+    sub: 'ప్రామాణిక ఇటాలియన్ వంటకాలు',
+    badge: '3D & AR ప్రివ్యూ',
+    veg: 'శాఖాహారం',
+    loading: 'లోడ్ అవుతోంది...'
+  }
+};
+
+const CAT_LABELS = {
+  all: {
+    en: 'All',
+    it: 'Tutti'
+  },
+
+  starter: {
+    en: 'Starters',
+    it: 'Antipasti'
+  },
+
+  dessert: {
+    en: 'Desserts',
+    it: 'Dolci'
+  },
+
+  'main-course': {
+    en: 'Main Course',
+    it: 'Portata Principale'
+  }
+};
+
+function rowToDish(row) {
+
+  const truthy = v =>
+    ['true', 'yes', '1'].includes((v || '').toLowerCase());
+
+  const lang = currentLang === 'it' ? '_it' :
+               currentLang === 'kn' ? '_kn' :
+               currentLang === 'ta' ? '_ta' :
+               currentLang === 'ml' ? '_ml' :
+               currentLang === 'te' ? '_te' :
+               currentLang === 'hi' ? '_hi' : '';
+
+  const desc =
+    row[`description${lang}`] ||
+    row['description'] ||
+    '';
+
+  const name =
+    row[`name${lang}`] ||
+    row['name'] ||
+    '';
+
+  const local = getLocalAssets(row['name']);
+
+  return {
+    id: row['id'] || '',
+    name,
+    category: (row['category'] || 'other').toLowerCase(),
+    desc,
+    price: parseInt(row['price'] || '0', 10),
+
+    veg: truthy(row['veg']),
+    available: truthy(row['available']),
+
+    glbPath: local.glbPath,
+    usdzPath: local.usdzPath,
+    posterPath: local.posterPath,
+    scale: local.scale,
+
+    emoji:
+      EMOJI_MAP[normalizeKey(row['name'])] || '🍽️'
+  };
+}
+</script>
 
 const I18N = {
   en: { sub:'Authentic Japanese Cuisine',     badge:'Interactive 3D & AR Preview',           veg:'veg',        loading:'読み込み中…' },
