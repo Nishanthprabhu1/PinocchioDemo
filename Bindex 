@@ -45,18 +45,17 @@
     /* ── WASHI TEXTURE BACKGROUND ── */
     html { scroll-behavior: smooth; }
 
-   body {
-  background:
-  linear-gradient(
-    180deg,
-    #3f0d14 0%,
-    #5b111b 30%,
-    #701826 60%,
-    #3a0d12 100%
-  );
+    body {
+      background:
+linear-gradient(
+  180deg,
+  #3f0d14 0%,
+  #5b111b 30%,
+  #701826 60%,
+  #3a0d12 100%
+);
 
-  color: #f3e8d7;
-}
+color: #f3e8d7;
 
     /* ── SEIGAIHA (wave) PATTERN SVG ── */
     .seigaiha-bg {
@@ -72,11 +71,11 @@
       position: relative;
       overflow: hidden;
       background:
-      linear-gradient(
+linear-gradient(
   145deg,
-  #3d0f13 0%,
-  #5e121a 40%,
-  #7a1824 70%,
+  #f3e2c7
+#dcb98b
+#f6dcb1
   #3d0f13 100%
 );
       color: #f5ede0;
@@ -706,25 +705,25 @@ const LOCAL_ASSETS = {
   'pistachio-sauce-bigne-with-ricotta': {
     folder: 'Pistachio-Sauce-Bigne-with-Ricotta',
     file: 'Pistachio-Sauce-Bigne-with-Ricotta',
-    scale: 0.12
+    scale: 0.25
   },
 
   'pinocchio-tiramisu': {
     folder: 'Pinocchio-Tiramisu',
     file: 'Pinocchio-Tiramisu',
-    scale: 0.12
+    scale: 0.25
   },
 
   'cheesy-green-lasagne': {
     folder: 'Cheesy-Green-Lasagne',
     file: 'Cheesy-Green-Lasagne',
-    scale: 0.12
+    scale: 0.25
   },
 
   'fried-calamari': {
     folder: 'Fried-Calamari',
     file: 'Fried-Calamari',
-    scale: 0.12
+    scale: 0.25
   }
 };
 
@@ -1052,16 +1051,12 @@ function loadModelAndAR(d, vw, arBadge, scaleInfo, arBtnWrap, photoWrap) {
 
   const mv = document.createElement('model-viewer');
   mv.setAttribute('src', d.glbPath);
-
-if (isIOS && d.usdzPath)
-  mv.setAttribute('ios-src', d.usdzPath);
-
-const s = d.scale || 1;
-mv.setAttribute('scale', `${s} ${s} ${s}`);
+  if (isIOS && d.usdzPath) mv.setAttribute('ios-src', d.usdzPath);
 
   // Scale: applied in 3D preview only. AR uses ar-scale="auto" so Scene Viewer
   // / WebXR auto-fits the model to real-world size from GLTF units — fastest & most accurate.
-  
+  const s = (d.scale ?? 1).toFixed(6);
+  mv.setAttribute('scale',             `${s} ${s} ${s}`);
   mv.setAttribute('ar',               '');
   mv.setAttribute('ar-modes',         'webxr scene-viewer quick-look');
   mv.setAttribute('ar-placement', 'floor');
