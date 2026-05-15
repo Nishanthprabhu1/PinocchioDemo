@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <title>Italian Cuisine — AR Menu</title>
-  <meta name="description" content="Interactive AR menu for Japanese Cuisine — authentic Japanese cuisine with 3D dish previews." />
+  <meta name="description" content="Interactive AR menu for Italian Cuisine — authentic Italian cuisine with 3D dish previews." />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -858,16 +858,6 @@ function rowToDish(row) {
       EMOJI_MAP[normalizeKey(row['name'])] || '🍽️'
   };
 }
-</script>
-
-const I18N = {
-  en: { sub:'Authentic Japanese Cuisine',     badge:'Interactive 3D & AR Preview',           veg:'veg',        loading:'読み込み中…' },
-  jp: { sub:'本物の日本料理',                  badge:'インタラクティブ3DとARプレビュー',          veg:'ベジ',       loading:'読み込み中…' },
-  kn: { sub:'ಅಧಿಕೃತ ಜಪಾನೀಸ್ ಆಹಾರ',         badge:'ಸಂವಾದಾತ್ಮಕ 3D ಮತ್ತು AR ಮುನ್ನೋಟ',       veg:'ಸಸ್ಯಹಾರಿ', loading:'ಲೋಡ್ ಆಗುತ್ತಿದೆ…' },
-  ta: { sub:'உண்மையான ஜப்பானிய உணவு',       badge:'ஊடாடும் 3D மற்றும் AR மாதிரிக்காட்சி', veg:'சைவம்',      loading:'ஏற்றப்படுகிறது…' },
-  ml: { sub:'ആധികാരിക ജാപ്പനീസ് വിഭവങ്ങൾ', badge:'ഇന്ററാക്ടീവ് 3D & AR പ്രിവ്യൂ',         veg:'വെജ്',       loading:'ലോഡ് ചെയ്യുന്നു…' },
-  te: { sub:'ప్రామాణిక జపనీస్ వంటకాలు',     badge:'ఇంటరాక్టివ్ 3D & AR ప్రివ్యూ',          veg:'శాఖాహారం',   loading:'లోడ్ అవుతోంది…' },
-};
 
 const CAT_LABELS = {
   all:     { en:'All',        jp:'すべて',    kn:'ಎಲ್ಲವೂ',        ta:'அனைத்தும்',     ml:'എല്ലാം',         te:'అన్నీ' },
