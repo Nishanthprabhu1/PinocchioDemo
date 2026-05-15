@@ -705,25 +705,25 @@ const LOCAL_ASSETS = {
   'pistachio-sauce-bigne-with-ricotta': {
     folder: 'Pistachio-Sauce-Bigne-with-Ricotta',
     file: 'Pistachio-Sauce-Bigne-with-Ricotta',
-    scale: 1
+    scale: 0.15
   },
 
   'pinocchio-tiramisu': {
     folder: 'Pinocchio-Tiramisu',
     file: 'Pinocchio-Tiramisu',
-    scale: 1
+    scale: 0.15
   },
 
   'cheesy-green-lasagne': {
     folder: 'Cheesy-Green-Lasagne',
     file: 'Cheesy-Green-Lasagne',
-    scale: 1
+    scale: 0.15
   },
 
   'fried-calamari': {
     folder: 'Fried-Calamari',
     file: 'Fried-Calamari',
-    scale: 1
+    scale: 0.15
   }
 };
 
@@ -1059,22 +1059,17 @@ function loadModelAndAR(d, vw, arBadge, scaleInfo, arBtnWrap, photoWrap) {
   mv.setAttribute('scale',             `${s} ${s} ${s}`);
   mv.setAttribute('ar',               '');
   mv.setAttribute('ar-modes',         'webxr scene-viewer quick-look');
-  mv.setAttribute('ar-placement', 'floor');
-  mv.setAttribute('ar-scale', 'fixed');
-
-  mv.setAttribute('camera-controls', '');
-  mv.setAttribute('touch-action', 'pan-y');
-
+  mv.setAttribute('ar-placement',     'floor');
+  mv.setAttribute('ar-scale',         'auto');          // auto-fit to environment
+  mv.setAttribute('camera-controls',  '');
+  mv.setAttribute('camera-orbit',     '0deg 75deg auto');
+  mv.setAttribute('min-camera-orbit', 'auto 10deg 0.1m');
+  mv.setAttribute('max-camera-orbit', 'auto 90deg 10m');
+  mv.setAttribute('field-of-view',    'auto');
   mv.setAttribute('shadow-intensity', '1');
-  mv.setAttribute('shadow-softness', '0.8');
-
-  mv.setAttribute('environment-image', 'neutral');
-  mv.setAttribute('exposure', '1');
-
-  mv.setAttribute('camera-orbit', '0deg 75deg 105%');
-
-  mv.setAttribute('min-camera-orbit', 'auto auto 60%');
-  mv.setAttribute('max-camera-orbit', 'auto auto 140%');
+  mv.setAttribute('shadow-softness',  '0.8');
+  mv.setAttribute('environment-image','neutral');
+  mv.setAttribute('exposure',         '1.1');
   mv.setAttribute('interaction-prompt','none');
   mv.setAttribute('loading',          'eager');
   mv.setAttribute('reveal',           'auto');
