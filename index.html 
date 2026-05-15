@@ -297,7 +297,7 @@ linear-gradient(
       flex-shrink: 0;
     }
 
-    /* ── MENU CARDS ── */
+    /* ── MENU CARDS  ── */
     .items-grid { display: flex; flex-direction: column; gap: 10px; }
 
     .menu-card {
