@@ -623,7 +623,7 @@
   <h1 class="header-title">Italian Cuisine</h1>
   <span class="header-title-jp">Cucina Italiana</span>
   <div class="brush-divider"></div>
-  <p class="header-sub" id="ui-sub-tag">Authentic Japanese Cuisine</p>
+  <p class="header-sub" id="ui-sub-tag">Authentic Italian Cuisine</p>
   <span class="ar-badge">
     <span class="ar-dot"></span>
     <span id="ui-ar-badge">Interactive 3D &amp; AR Preview</span>
@@ -637,7 +637,7 @@
 <main class="main">
   <div class="state-box" id="loading-state">
     <div class="spinner"></div>
-    <p id="ui-loading">読み込み中…</p>
+    <p id="ui-loading">Loading...</p>
   </div>
   <div id="items-container" style="display:none"></div>
 </main>
@@ -711,6 +711,8 @@ const LOCAL_ASSETS = {
 };
 
 const ASSETS_BASE = '3d-model';
+const CSV_URL =
+'https://docs.google.com/spreadsheets/d/e/1EtqAnHLOISZt2AMgrqxxNEak_73GmmsfDpZ2ProVxxE/pub?output=csv';
 
 function normalizeKey(str) {
   return (str || '')
@@ -793,28 +795,6 @@ const I18N = {
   }
 };
 
-const CAT_LABELS = {
-  all: {
-    en: 'All',
-    it: 'Tutti'
-  },
-
-  starter: {
-    en: 'Starters',
-    it: 'Antipasti'
-  },
-
-  dessert: {
-    en: 'Desserts',
-    it: 'Dolci'
-  },
-
-  'main-course': {
-    en: 'Main Course',
-    it: 'Portata Principale'
-  }
-};
-
 function rowToDish(row) {
 
   const truthy = v =>
@@ -860,12 +840,25 @@ function rowToDish(row) {
 }
 
 const CAT_LABELS = {
-  all:     { en:'All',        jp:'すべて',    kn:'ಎಲ್ಲವೂ',        ta:'அனைத்தும்',     ml:'എല്ലാം',         te:'అన్నీ' },
-  starter: { en:'Starters',   jp:'スターター', kn:'ಆರಂಭಿಕಗಳು',    ta:'துவக்கிகள்',    ml:'സ്റ്റാർട്ടറുകൾ', te:'ప్రారంభకాలు' },
-  ramen:   { en:'Ramen',      jp:'ラーメン',   kn:'ರಾಮೆನ್',        ta:'ராமன்',         ml:'രാമെൻ',          te:'రామెన్' },
-  sushi:   { en:'Sushi',      jp:'寿司',       kn:'ಸುಶಿ',          ta:'சுஷி',          ml:'സുഷി',           te:'సుషీ' },
-  rice:    { en:'Mains',      jp:'メイン',     kn:'ಮುಖ್ಯ ಆಹಾರ',   ta:'முக்கிய உணவு',  ml:'പ്രധാന ഭക്ഷണം',  te:'ప్రధాన వంటకాలు' },
-  drinks:  { en:'Desserts',   jp:'デザート',   kn:'ಸಿಹಿತಿಂಡಿಗಳು', ta:'இனிப்புகள்',    ml:'ഡെസേർട്ടുകൾ',    te:'తీపి వంటకాలు' },
+  all: {
+    en: 'All',
+    it: 'Tutti'
+  },
+
+  starter: {
+    en: 'Starters',
+    it: 'Antipasti'
+  },
+
+  dessert: {
+    en: 'Desserts',
+    it: 'Dolci'
+  },
+
+  'main-course': {
+    en: 'Main Course',
+    it: 'Portata Principale'
+  }
 };
 
 let allDishes = [], rawRows = [], activeCategory = 'all', currentLang = 'en';
@@ -894,29 +887,7 @@ function splitLine(line) {
   result.push(cur); return result;
 }
 
-function rowToDish(row) {
-  const truthy = v => ['true','yes','1'].includes((v||'').toLowerCase());
-  const sfx  = currentLang !== 'en' ? `_${currentLang}` : '';
-  const desc = row[`description${sfx}`] || row['description'] || '';
-  const name = row[`name${sfx}`]        || row['name']        || '';
-  const local = getLocalAssets(row['name'] || name);
-  return {
-    id:        row['id']       || '',
-    name, category: (row['category'] || 'other').toLowerCase(),
-    jp:        row['jp_name']  || '',
-    desc,
-    price:     parseInt(row['price'] || '0', 10),
-    veg:       truthy(row['veg']),
-    dotd:      truthy(row['dish of the day'] || row['dotd']),
-    isNew:     truthy(row['new']),
-    available: truthy(row['available']),
-    glbPath:   local.glbPath,
-    usdzPath:  local.usdzPath,
-    posterPath: local.posterPath,
-    scale:     local.scale,
-    emoji:     EMOJI_MAP[(row['name']||'').toLowerCase()] || '🍽️',
-  };
-}
+
 
 function tagHTML(d) {
   const t = I18N[currentLang] || I18N.en;
@@ -1167,17 +1138,22 @@ async function init() {
     container.style.display = 'block';
     renderTabs(); renderItems();
   } catch (err) {
-    console.error('Menu load error:', err);
-    loadingEl.innerHTML = `
-      <p style="color:var(--crimson);font-family:'Cinzel',serif;letter-spacing:2px;margin-bottom:10px">Could not load menu</p>
-      <p style="font-size:13px;line-height:1.8;color:var(--ink-light)">
-        Make sure your sheet is published:<br>
-        <strong>File → Share → Publish to web → CSV</strong><br><br>
-        Sheet ID:<br>
-        <code style="background:var(--washi-deep);padding:3px 8px;font-size:11px">${SHEET_ID}</code>
-      </p>`;
-  }
+  console.error('Menu load error:', err);
+
+  loadingEl.innerHTML = `
+    <p style="color:var(--crimson);font-family:'Cinzel',serif;letter-spacing:2px;margin-bottom:10px">
+      Could not load menu
+    </p>
+
+    <p style="font-size:13px;line-height:1.8;color:var(--ink-light)">
+      Make sure your sheet is published:<br>
+      <strong>File → Share → Publish to web → CSV</strong><br><br>
+
+      Google Sheet Connected Successfully
+    </p>`;
 }
+  }
+
 init();
 </script>
 </body>
