@@ -279,7 +279,7 @@ transform:scale(1.35)
 <a href="FunZone.html" class="back-btn">← Back</a>
 
 <div class="nav-header">
-<h1>Explore Japan</h1>
+<h1>Explore Italy</h1>
 <p>Augmented Reality Landmarks</p>
 </div>
 
@@ -288,12 +288,10 @@ transform:scale(1.35)
 
 <script>
 const landmarks=[
-{name:'Tokyo Skytree',city:'Tokyo',folder:'tokyoskytree',file:'tokyoskytree',hasUsdz:true},
-{name:'Japanese Torii Gate',city:'Japan',folder:'Japanese Torii Gate',file:'Japanese Torii Gate',hasUsdz:true},
-{name:'Japanese Castle',city:'Japan',folder:'japanesecastle',file:'japanesecastle',hasUsdz:true},
-{name:'Nijo Castle',city:'Kyoto',folder:'Nijo Castle japan',file:'Nijo Castle japan',hasUsdz:false},
-{name:'Pagoda',city:'Japan',folder:'pagoda',file:'pagoda',hasUsdz:true},
-{name:'Kimono Dress',city:'Japan',folder:'dress',file:'dress',hasUsdz:true}
+{name:'amalficoast',city:'Italy',folder:'amalficoast',file:'amalficoast',hasUsdz:true},
+{name:'colosseum',city:'Italy',folder:'colosseum',file:'colosseum',hasUsdz:true},
+{name:'duomo museum',city:'Italy',folder:'duomo museum',file:'duomo museum',hasUsdz:true},
+{name:'leaning tower of pisa',city:'leaning tower of pisa',folder:'leaning tower of pisa',file:'leaning tower of pisa',hasUsdz:false},
 ];
 
 const grid=document.getElementById('grid');
@@ -303,7 +301,7 @@ const isIOS=/iPhone|iPad|iPod/i.test(navigator.userAgent)||
 (navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 
 landmarks.forEach((l,i)=>{
-const base=`ExploreJapan/${l.folder}/${l.file}`;
+const base=`ExploreItally${l.folder}/${l.file}`;
 const glbPath=`${base}.glb`;
 const usdzPath=`${base}.usdz`;
 const pngPath=`${base}.png`;
