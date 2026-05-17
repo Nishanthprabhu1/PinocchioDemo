@@ -243,6 +243,11 @@ letter-spacing:.1em;
 text-transform:uppercase;
 min-height:46px;
 cursor:pointer;
+transition: opacity .2s;
+}
+.action-btn:disabled{
+opacity:.45;
+cursor:not-allowed;
 }
 .view3d-btn{
 background:rgba(184,151,58,.14);
@@ -256,6 +261,55 @@ background:rgba(184,151,58,.25)
 flex:1;
 background:linear-gradient(135deg,var(--gold),var(--gold2));
 color:#000;
+}
+.ar-btn.error{
+background:rgba(184,151,58,.15);
+color:rgba(212,174,82,.5);
+border:1px solid rgba(184,151,58,.2);
+}
+
+/* Retry button */
+.retry-btn{
+display:none;
+position:absolute;
+bottom:16px;
+left:50%;
+transform:translateX(-50%);
+background:rgba(184,151,58,.15);
+border:1px solid rgba(184,151,58,.4);
+color:var(--gold2);
+border-radius:30px;
+padding:8px 20px;
+font-size:10px;
+letter-spacing:.14em;
+text-transform:uppercase;
+cursor:pointer;
+z-index:15;
+white-space:nowrap;
+}
+.retry-btn.show{display:block}
+
+/* Error overlay */
+.error-overlay{
+position:absolute;
+inset:0;
+display:none;
+align-items:center;
+justify-content:center;
+flex-direction:column;
+gap:10px;
+background:rgba(8,6,4,.7);
+z-index:12;
+}
+.error-overlay.show{display:flex}
+.error-icon{font-size:28px;opacity:.5}
+.error-msg{
+font-size:9px;
+letter-spacing:.16em;
+text-transform:uppercase;
+opacity:.5;
+text-align:center;
+padding:0 20px;
 }
 
 .scroll-dots{
@@ -288,188 +342,241 @@ transform:scale(1.35)
 
 <script>
 const landmarks=[
-  {name:'Amalfi Coast',          city:'Italy', folder:'amalficoast',            file:'amalficoast',            hasUsdz:true},
-  {name:'Colosseum',             city:'Italy', folder:'colosseum',               file:'colosseum',               hasUsdz:true},
-  {name:'Duomo Museum',          city:'Italy', folder:'duomo-museum',            file:'duomo-museum',            hasUsdz:true},
-  {name:'Leaning Tower of Pisa', city:'Italy', folder:'leaning-tower-of-pisa',   file:'leaning-tower-of-pisa',  hasUsdz:true},
+  {name:'Amalfi Coast',          city:'Italy', folder:'amalficoast',           file:'amalficoast',           hasUsdz:true},
+  {name:'Colosseum',             city:'Italy', folder:'colosseum',              file:'colosseum',              hasUsdz:true},
+  {name:'Duomo Museum',          city:'Italy', folder:'duomo-museum',           file:'duomo-museum',           hasUsdz:true},
+  {name:'Leaning Tower of Pisa', city:'Italy', folder:'leaning-tower-of-pisa', file:'leaning-tower-of-pisa', hasUsdz:true},
 ];
 
 const grid=document.getElementById('grid');
 const dotsEl=document.getElementById('dots');
 
 const isIOS=/iPhone|iPad|iPod/i.test(navigator.userAgent)||
-(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  (navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+
+// Pre-flight check: test if a GLB is actually reachable before model-viewer tries
+async function checkFile(url){
+  try{
+    const r=await fetch(url,{method:'HEAD'});
+    return r.ok;
+  }catch(e){
+    return false;
+  }
+}
 
 landmarks.forEach((l,i)=>{
-const base=`ExploreItally/${l.folder}/${l.file}`;
-const glbPath=`${base}.glb`;
-const usdzPath=`${base}.usdz`;
-const pngPath=`${base}.png`;
+  const base=`ExploreItally/${l.folder}/${l.file}`;
+  const glbPath=`${base}.glb`;
+  const usdzPath=`${base}.usdz`;
+  const pngPath=`${base}.png`;
 
-const card=document.createElement('div');
-card.className='landmark-card';
+  const card=document.createElement('div');
+  card.className='landmark-card';
 
-card.innerHTML=`
-<div class="model-wrap" id="wrap-${i}">
+  card.innerHTML=`
+  <div class="model-wrap" id="wrap-${i}">
 
-<img class="model-poster" src="${pngPath}" alt="${l.name}">
+    <img class="model-poster" src="${pngPath}" alt="${l.name}"
+         onerror="this.style.opacity='.15'">
 
-<model-viewer
-id="mv-${i}"
-src="${glbPath}"
-${isIOS&&l.hasUsdz?`ios-src="${usdzPath}"`:''}
-ar
-ar-modes="${isIOS?'quick-look webxr':'scene-viewer webxr'}"
-ar-placement="floor"
+    <model-viewer
+      id="mv-${i}"
+      src="${glbPath}"
+      ${isIOS&&l.hasUsdz?`ios-src="${usdzPath}"`:''}
+      ar
+      ar-modes="${isIOS?'quick-look webxr':'scene-viewer webxr'}"
+      ar-placement="floor"
+      ar-scale="auto"
+      loading="lazy"
+      reveal="interaction"
+      environment-image="neutral"
+      shadow-intensity="1.2"
+      shadow-softness="0.8"
+      exposure="1.1"
+      camera-controls
+      touch-action="pan-y"
+      min-camera-orbit="auto auto 8%"
+      max-camera-orbit="auto auto 900%"
+      field-of-view="18deg"
+      interpolation-decay="200"
+      interaction-prompt="none">
+    </model-viewer>
 
-ar-scale="auto"
+    <div class="ar-loading" id="arload-${i}">
+      <div class="loader-ring"></div>
+      <div class="loader-bar-track"><div class="loader-bar-fill" id="bar-${i}"></div></div>
+      <div class="loader-label" id="lbl-${i}">Loading model…</div>
+    </div>
 
-loading="${i===0?'eager':'lazy'}"
-reveal="interaction"
-environment-image="neutral"
-shadow-intensity="1.2"
-shadow-softness="0.8"
-exposure="1.1"
+    <div class="error-overlay" id="erroverlay-${i}">
+      <div class="error-icon">⚠︎</div>
+      <div class="error-msg" id="errmsg-${i}">Model unavailable</div>
+    </div>
 
-camera-controls
-touch-action="pan-y"
+    <button class="retry-btn" id="retry-${i}" onclick="retryLoad(${i})">↺ Retry</button>
 
-min-camera-orbit="auto auto 8%"
-max-camera-orbit="auto auto 900%"
-field-of-view="18deg"
-interpolation-decay="200"
-interaction-prompt="none">
-</model-viewer>
+    <div class="ar-badge" id="badge-${i}">✦ AR Ready</div>
+    <div class="pinch-hint">⟺ Pinch Zoom • Drag Rotate • Scale in AR</div>
+  </div>
 
-<div class="ar-loading" id="arload-${i}">
-<div class="loader-ring"></div>
-<div class="loader-bar-track"><div class="loader-bar-fill" id="bar-${i}"></div></div>
-<div class="loader-label" id="lbl-${i}">Loading model...</div>
-</div>
+  <div class="landmark-info">
+    <div class="landmark-name">${l.name}</div>
+    <div class="landmark-city">${l.city}</div>
+    <div class="btn-row">
+      <button class="action-btn view3d-btn" id="v3dbtn-${i}" onclick="toggle3D(${i})">⬡ 3D</button>
+      <button class="action-btn ar-btn"    id="arbtn-${i}"  onclick="launchAR(${i})">🪐 View in Real World</button>
+    </div>
+  </div>`;
 
-<div class="ar-badge" id="badge-${i}">✦ AR Ready</div>
-<div class="pinch-hint">⟺ Pinch Zoom • Drag Rotate • Scale in AR</div>
-</div>
+  grid.appendChild(card);
 
-<div class="landmark-info">
-<div class="landmark-name">${l.name}</div>
-<div class="landmark-city">${l.city}</div>
-<div class="btn-row">
-<button class="action-btn view3d-btn" id="v3dbtn-${i}" onclick="toggle3D(${i})">⬡ 3D</button>
-<button class="action-btn ar-btn" id="arbtn-${i}" onclick="launchAR(${i})">🪐 View in Real World</button>
-</div>
-</div>`;
-
-grid.appendChild(card);
-
-const dot=document.createElement('div');
-dot.className='dot'+(i===0?' active':'');
-dotsEl.appendChild(dot);
+  const dot=document.createElement('div');
+  dot.className='dot'+(i===0?' active':'');
+  dotsEl.appendChild(dot);
 });
 
+// ── state ──────────────────────────────────────────────────────────────
 const state={};
 
 requestAnimationFrame(()=>{
-landmarks.forEach((l,i)=>{
-const mv=document.getElementById(`mv-${i}`);
-const arload=document.getElementById(`arload-${i}`);
-const bar=document.getElementById(`bar-${i}`);
-const lbl=document.getElementById(`lbl-${i}`);
-const badge=document.getElementById(`badge-${i}`);
-const arbtn=document.getElementById(`arbtn-${i}`);
-const v3dbtn=document.getElementById(`v3dbtn-${i}`);
-const wrap=document.getElementById(`wrap-${i}`);
+  landmarks.forEach((l,i)=>{
+    const mv         = document.getElementById(`mv-${i}`);
+    const arload     = document.getElementById(`arload-${i}`);
+    const bar        = document.getElementById(`bar-${i}`);
+    const lbl        = document.getElementById(`lbl-${i}`);
+    const badge      = document.getElementById(`badge-${i}`);
+    const arbtn      = document.getElementById(`arbtn-${i}`);
+    const v3dbtn     = document.getElementById(`v3dbtn-${i}`);
+    const wrap       = document.getElementById(`wrap-${i}`);
+    const erroverlay = document.getElementById(`erroverlay-${i}`);
+    const errmsg     = document.getElementById(`errmsg-${i}`);
+    const retrybtn   = document.getElementById(`retry-${i}`);
 
-state[i]={mv,arload,bar,lbl,badge,arbtn,v3dbtn,wrap,ready:false,loading:false,showing3D:false};
+    state[i]={mv,arload,bar,lbl,badge,arbtn,v3dbtn,wrap,erroverlay,errmsg,retrybtn,
+              ready:false,loading:false,showing3D:false,errored:false,
+              glbPath:`ExploreItally/${l.folder}/${l.file}.glb`};
 
-mv.addEventListener('progress',(e)=>{
-const pct=Math.round(e.detail.totalProgress*100);
-bar.style.width=pct+'%';
-lbl.textContent=`Loading ${pct}%`;
+    mv.addEventListener('progress',(e)=>{
+      const pct=Math.round(e.detail.totalProgress*100);
+      bar.style.width=pct+'%';
+      lbl.textContent=`Loading ${pct}%`;
+    });
+
+    mv.addEventListener('load',()=>{
+      const s=state[i];
+      s.ready=true; s.loading=false; s.errored=false;
+      arload.classList.remove('show');
+      erroverlay.classList.remove('show');
+      retrybtn.classList.remove('show');
+      badge.classList.add('visible');
+      console.log(`✅ [${l.name}] loaded OK`);
+      if(s.pending3D){s.pending3D=false; activate3DView(i);}
+      if(s.pendingAR){s.pendingAR=false; mv.activateAR();}
+    });
+
+    mv.addEventListener('error',(e)=>{
+      const s=state[i];
+      s.ready=false; s.loading=false; s.errored=true;
+      arload.classList.remove('show');
+
+      // Diagnose: try a HEAD fetch to see if it's a 404 vs CORS/server issue
+      fetch(s.glbPath,{method:'HEAD'})
+        .then(r=>{
+          if(r.ok){
+            // File exists but model-viewer still errored — likely corrupt GLB
+            errmsg.textContent='Model file may be corrupted';
+            console.warn(`⚠️ [${l.name}] file exists (${r.status}) but model-viewer errored — possibly corrupt GLB`);
+          } else {
+            errmsg.textContent=`File not found (${r.status})`;
+            console.error(`❌ [${l.name}] ${r.status} at ${s.glbPath}`);
+          }
+        })
+        .catch(err=>{
+          // fetch itself failed — file:// protocol or network error
+          errmsg.textContent='Serve via localhost, not file://';
+          console.error(`❌ [${l.name}] fetch failed — are you on file://?`, err);
+        });
+
+      erroverlay.classList.add('show');
+      retrybtn.classList.add('show');
+
+      // Disable AR button, keep 3D button for retry
+      arbtn.disabled=true;
+      arbtn.classList.add('error');
+      arbtn.textContent='Unavailable';
+    });
+  });
 });
 
-mv.addEventListener('load',()=>{
-const s=state[i];
-s.ready=true;
-s.loading=false;
-arload.classList.remove('show');
-badge.classList.add('visible');
-if(s.pending3D){s.pending3D=false;activate3DView(i)}
-if(s.pendingAR){s.pendingAR=false;mv.activateAR()}
-});
+// ── helpers ────────────────────────────────────────────────────────────
+function startLoad(i){
+  const s=state[i];
+  if(s.loading||s.ready) return;
+  s.loading=true;
+  s.errored=false;
+  s.erroverlay&&s.erroverlay.classList.remove('show');
+  s.retrybtn.classList.remove('show');
+  s.arload.classList.add('show');
+  s.bar.style.width='0%';
+  s.lbl.textContent='Loading model…';
+  s.mv.setAttribute('loading','eager');
+  // Re-assign src to force reload after an error
+  const src=s.mv.getAttribute('src');
+  s.mv.setAttribute('src','');
+  requestAnimationFrame(()=>s.mv.setAttribute('src',src));
+}
 
-mv.addEventListener('error',()=>{
-arload.classList.remove('show');
-arbtn.disabled=true;
-v3dbtn.disabled=true;
-arbtn.innerHTML='Unavailable';
-});
-});
-});
+function retryLoad(i){
+  const s=state[i];
+  s.arbtn.disabled=false;
+  s.arbtn.classList.remove('error');
+  s.arbtn.textContent='🪐 View in Real World';
+  startLoad(i);
+}
 
 function activate3DView(i){
-const s=state[i];
-s.showing3D=true;
-s.wrap.classList.add('model-active');
-s.v3dbtn.classList.add('is-active');
-s.v3dbtn.innerHTML='✕ 2D';
-s.wrap.addEventListener('touchstart',stopScrollPropagation,{passive:false});
+  const s=state[i];
+  s.showing3D=true;
+  s.wrap.classList.add('model-active');
+  s.v3dbtn.classList.add('is-active');
+  s.v3dbtn.innerHTML='✕ 2D';
+  s.wrap.addEventListener('touchstart',stopScrollPropagation,{passive:false});
 }
 
 function deactivate3DView(i){
-const s=state[i];
-s.showing3D=false;
-s.wrap.classList.remove('model-active');
-s.v3dbtn.classList.remove('is-active');
-s.v3dbtn.innerHTML='⬡ 3D';
-s.wrap.removeEventListener('touchstart',stopScrollPropagation);
+  const s=state[i];
+  s.showing3D=false;
+  s.wrap.classList.remove('model-active');
+  s.v3dbtn.classList.remove('is-active');
+  s.v3dbtn.innerHTML='⬡ 3D';
+  s.wrap.removeEventListener('touchstart',stopScrollPropagation);
 }
 
-function stopScrollPropagation(e){
-e.stopPropagation();
-}
+function stopScrollPropagation(e){e.stopPropagation();}
 
 function toggle3D(i){
-const s=state[i];
-if(s.showing3D){
-deactivate3DView(i);
-return;
-}
-if(s.ready){
-activate3DView(i);
-}else if(!s.loading){
-s.loading=true;
-s.pending3D=true;
-s.mv.setAttribute('loading','eager');
-s.arload.classList.add('show');
-}else{
-s.pending3D=true;
-}
+  const s=state[i];
+  if(s.showing3D){deactivate3DView(i);return;}
+  if(s.ready){activate3DView(i);}
+  else{s.pending3D=true; startLoad(i);}
 }
 
 function launchAR(i){
-const s=state[i];
-if(s.ready){
-s.mv.activateAR();
-}else if(!s.loading){
-s.loading=true;
-s.pendingAR=true;
-s.mv.setAttribute('loading','eager');
-s.arload.classList.add('show');
-}else{
-s.pendingAR=true;
-}
+  const s=state[i];
+  if(s.ready){s.mv.activateAR();}
+  else{s.pendingAR=true; startLoad(i);}
 }
 
+// ── scroll dots ────────────────────────────────────────────────────────
 const dots=dotsEl.querySelectorAll('.dot');
 grid.addEventListener('scroll',()=>{
-const center=grid.scrollLeft+grid.clientWidth/2;
-let closest=0,minDist=Infinity;
-grid.querySelectorAll('.landmark-card').forEach((card,ci)=>{
-const dist=Math.abs((card.offsetLeft+card.offsetWidth/2)-center);
-if(dist<minDist){minDist=dist;closest=ci;}
-});
-dots.forEach((d,di)=>d.classList.toggle('active',di===closest));
+  const center=grid.scrollLeft+grid.clientWidth/2;
+  let closest=0,minDist=Infinity;
+  grid.querySelectorAll('.landmark-card').forEach((card,ci)=>{
+    const dist=Math.abs((card.offsetLeft+card.offsetWidth/2)-center);
+    if(dist<minDist){minDist=dist;closest=ci;}
+  });
+  dots.forEach((d,di)=>d.classList.toggle('active',di===closest));
 },{passive:true});
 </script>
 
