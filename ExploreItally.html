@@ -385,7 +385,6 @@ state[i]={mv,arload,bar,lbl,badge,arbtn,v3dbtn,wrap,ready:false,loading:false,sh
 
 mv.addEventListener('error',(e)=>{
  console.log('MODEL ERROR:', e);
-
  console.log('GLB PATH:', mv.src);
 
  arload.classList.remove('show');
@@ -395,23 +394,27 @@ mv.addEventListener('error',(e)=>{
 });
 
 mv.addEventListener('load',()=>{
-const s=state[i];
-s.ready=true;
-s.loading=false;
-arload.classList.remove('show');
-badge.classList.add('visible');
-if(s.pending3D){s.pending3D=false;activate3DView(i)}
-if(s.pendingAR){s.pendingAR=false;mv.activateAR()}
+ const s=state[i];
+ s.ready=true;
+ s.loading=false;
+
+ arload.classList.remove('show');
+ badge.classList.add('visible');
+
+ if(s.pending3D){
+   s.pending3D=false;
+   activate3DView(i);
+ }
+
+ if(s.pendingAR){
+   s.pendingAR=false;
+   mv.activateAR();
+ }
 });
 
-mv.addEventListener('error',()=>{
-arload.classList.remove('show');
-arbtn.disabled=true;
-v3dbtn.disabled=true;
-arbtn.innerHTML='Unavailable';
-});
-});
-});
+}); // closes landmarks.forEach
+
+}); // closes requestAnimationFrame
 
 function activate3DView(i){
 const s=state[i];
