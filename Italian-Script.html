@@ -1,1 +1,362 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Explore Italy</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Cormorant+Garamond:wght@300;400;500;600&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
+
+<script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+
+<style>
+:root{
+--bg:#070707;
+--gold:#d4af37;
+--gold-light:#f0d67d;
+--cream:#f5f1e8;
+--cream-soft:#d9cfbb;
+--wine:#4a1717;
+--border:rgba(212,175,55,.18);
+--card:#121212;
+}
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
+
+body{
+font-family:'Cormorant Garamond',serif;
+background:
+linear-gradient(rgba(0,0,0,.7),rgba(0,0,0,.88)),
+url('https://images.unsplash.com/photo-1516483638261-f4dbaf036963?q=80&w=1974&auto=format&fit=crop');
+background-size:cover;
+background-position:center;
+background-attachment:fixed;
+color:var(--cream);
+min-height:100vh;
+overflow-x:hidden;
+}
+
+body::before{
+content:'';
+position:fixed;
+inset:0;
+background:
+radial-gradient(circle at top left,rgba(212,175,55,.12),transparent 35%),
+radial-gradient(circle at bottom right,rgba(212,175,55,.08),transparent 35%);
+pointer-events:none;
+}
+
+.page{
+position:relative;
+z-index:1;
+padding:40px 20px 80px;
+max-width:1400px;
+margin:auto;
+}
+
+.hero{
+text-align:center;
+padding:60px 20px;
+margin-bottom:40px;
+}
+
+.hero h1{
+font-family:'Cinzel',serif;
+font-size:clamp(3rem,7vw,6rem);
+letter-spacing:.12em;
+text-transform:uppercase;
+color:var(--gold);
+text-shadow:0 0 30px rgba(212,175,55,.3);
+}
+
+.hero p{
+margin-top:18px;
+font-size:1rem;
+letter-spacing:.35em;
+text-transform:uppercase;
+color:rgba(255,255,255,.65);
+}
+
+.hero-line{
+width:120px;
+height:1px;
+background:linear-gradient(90deg,transparent,var(--gold),transparent);
+margin:24px auto;
+}
+
+.landmark-grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+gap:28px;
+}
+
+.card{
+background:linear-gradient(145deg,#111,#191919);
+border:1px solid var(--border);
+border-radius:28px;
+overflow:hidden;
+backdrop-filter:blur(8px);
+box-shadow:0 10px 40px rgba(0,0,0,.45);
+transition:.35s ease;
+position:relative;
+}
+
+.card:hover{
+transform:translateY(-8px);
+box-shadow:0 20px 60px rgba(0,0,0,.6);
+}
+
+.model-wrap{
+position:relative;
+height:420px;
+background:radial-gradient(circle at center,#2b1f0f 0%,#090909 80%);
+overflow:hidden;
+}
+
+.model-poster{
+position:absolute;
+inset:0;
+width:100%;
+height:100%;
+object-fit:cover;
+transition:.4s;
+z-index:1;
+}
+
+.model-wrap.active .model-poster{
+opacity:0;
+pointer-events:none;
+}
+
+model-viewer{
+position:absolute;
+inset:0;
+width:100%;
+height:100%;
+opacity:0;
+pointer-events:none;
+transition:.4s;
+z-index:2;
+--poster-color:transparent;
+}
+
+.model-wrap.active model-viewer{
+opacity:1;
+pointer-events:auto;
+}
+
+.info{
+padding:24px;
+}
+
+.place{
+font-family:'Playfair Display',serif;
+font-size:2rem;
+margin-bottom:6px;
+color:var(--gold-light);
+}
+
+.country{
+font-size:.82rem;
+letter-spacing:.3em;
+text-transform:uppercase;
+color:rgba(255,255,255,.45);
+margin-bottom:22px;
+}
+
+.btn-row{
+display:flex;
+gap:12px;
+}
+
+button{
+flex:1;
+padding:14px;
+border:none;
+border-radius:14px;
+font-weight:700;
+letter-spacing:.08em;
+font-size:.8rem;
+text-transform:uppercase;
+cursor:pointer;
+transition:.3s ease;
+}
+
+.view-btn{
+background:rgba(212,175,55,.08);
+color:var(--gold-light);
+border:1px solid rgba(212,175,55,.25);
+}
+
+.view-btn:hover{
+background:rgba(212,175,55,.15);
+}
+
+.ar-btn{
+background:linear-gradient(135deg,var(--gold),var(--gold-light));
+color:black;
+}
+
+.ar-btn:hover{
+transform:translateY(-2px);
+box-shadow:0 10px 25px rgba(212,175,55,.35);
+}
+
+.badge{
+position:absolute;
+right:16px;
+top:16px;
+padding:8px 14px;
+background:rgba(0,0,0,.7);
+border:1px solid var(--gold);
+border-radius:40px;
+font-size:.72rem;
+letter-spacing:.12em;
+color:var(--gold-light);
+z-index:5;
+}
+
+.footer{
+margin-top:80px;
+text-align:center;
+color:rgba(255,255,255,.45);
+font-size:.9rem;
+letter-spacing:.15em;
+text-transform:uppercase;
+}
+
+@media(max-width:700px){
+.hero h1{
+font-size:3rem;
+}
+
+.model-wrap{
+height:340px;
+}
+
+.place{
+font-size:1.6rem;
+}
+
+.btn-row{
+flex-direction:column;
+}
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+<div class="hero">
+<h1>Explore Italy</h1>
+<div class="hero-line"></div>
+<p>Luxury Augmented Reality Landmarks</p>
+</div>
+
+<div class="landmark-grid" id="grid"></div>
+
+<div class="footer">
+Explore Italy in Augmented Reality • Colosseum • Amalfi Coast • Pisa • Duomo
+</div>
+
+</div>
+
+<script>
+const landmarks=[
+{
+name:'Amalfi Coast',
+country:'Italy',
+folder:'amalficoast',
+file:'amalficoast'
+},
+{
+name:'Colosseum',
+country:'Rome, Italy',
+folder:'colosseum',
+file:'colosseum'
+},
+{
+name:'Duomo Museum',
+country:'Florence, Italy',
+folder:'duomo-museum',
+file:'duomo-museum'
+},
+{
+name:'Leaning Tower of Pisa',
+country:'Pisa, Italy',
+folder:'leaning-tower-of-pisa',
+file:'leaning-tower-of-pisa'
+}
+];
+
+const grid=document.getElementById('grid');
+
+landmarks.forEach((l,i)=>{
+
+const base=`${l.folder}/${l.file}`;
+
+const card=document.createElement('div');
+card.className='card';
+
+card.innerHTML=`
+<div class="model-wrap" id="wrap-${i}">
+
+<div class="badge">✦ AR Ready</div>
+
+<img class="model-poster"
+src="${base}.png"
+alt="${l.name}">
+
+<model-viewer
+id="mv-${i}"
+src="${base}.glb"
+ios-src="${base}.usdz"
+ar
+ar-modes="scene-viewer quick-look webxr"
+camera-controls
+touch-action="pan-y"
+shadow-intensity="1"
+auto-rotate
+environment-image="neutral"
+>
+</model-viewer>
+
+</div>
+
+<div class="info">
+<div class="place">${l.name}</div>
+<div class="country">${l.country}</div>
+
+<div class="btn-row">
+<button class="view-btn" onclick="toggle3D(${i})">3D View</button>
+<button class="ar-btn" onclick="launchAR(${i})">View in AR</button>
+</div>
+</div>
+`;
+
+grid.appendChild(card);
+});
+
+function toggle3D(i){
+const wrap=document.getElementById(`wrap-${i}`);
+wrap.classList.toggle('active');
+}
+
+function launchAR(i){
+const mv=document.getElementById(`mv-${i}`);
+mv.activateAR();
+}
+</script>
+
+</body>
+</html>
+```
 
