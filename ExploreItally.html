@@ -290,8 +290,8 @@ transform:scale(1.35)
 const landmarks=[
 {name:'amalficoast',city:'Italy',folder:'amalficoast',file:'amalficoast',hasUsdz:true},
 {name:'colosseum',city:'Italy',folder:'colosseum',file:'colosseum',hasUsdz:true},
-{name:'duomo museum',city:'Italy',folder:'duomo museum',file:'duomo museum',hasUsdz:true},
-{name:'leaning tower of pisa',city:'leaning tower of pisa',folder:'leaning tower of pisa',file:'leaning tower of pisa',hasUsdz:true},
+{name:'duomo museum',city:'Italy',folder:'duomo-museum',file:'duomo-museum',hasUsdz:true},
+{name:'leaning tower of pisa',city:'leaning-tower-of-pisa',folder:'leaning-tower-of-pisa',file:'leaning tower of pisa',hasUsdz:true},
 ];
 
 const grid=document.getElementById('grid');
@@ -301,7 +301,7 @@ const isIOS=/iPhone|iPad|iPod/i.test(navigator.userAgent)||
 (navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 
 landmarks.forEach((l,i)=>{
-const base=`ExploreItally${l.folder}/${l.file}`;
+const base=`ExploreItally/${l.folder}/${l.file}`;
 const glbPath=`${base}.glb`;
 const usdzPath=`${base}.usdz`;
 const pngPath=`${base}.png`;
