@@ -301,7 +301,8 @@ const isIOS=/iPhone|iPad|iPod/i.test(navigator.userAgent)||
 (navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 
 landmarks.forEach((l,i)=>{
-const base=`ExploreItally/${l.folder}/${l.file}`;
+const base=`${l.folder}/${l.file}`;
+
 const glbPath=`${base}.glb`;
 const usdzPath=`${base}.usdz`;
 const pngPath=`${base}.png`;
