@@ -382,10 +382,15 @@ const wrap=document.getElementById(`wrap-${i}`);
 
 state[i]={mv,arload,bar,lbl,badge,arbtn,v3dbtn,wrap,ready:false,loading:false,showing3D:false};
 
-mv.addEventListener('progress',(e)=>{
-const pct=Math.round(e.detail.totalProgress*100);
-bar.style.width=pct+'%';
-lbl.textContent=`Loading ${pct}%`;
+mv.addEventListener('error',(e)=>{
+ console.log('MODEL ERROR:', e);
+
+ console.log('GLB PATH:', mv.src);
+
+ arload.classList.remove('show');
+ arbtn.disabled=true;
+ v3dbtn.disabled=true;
+ arbtn.innerHTML='Unavailable';
 });
 
 mv.addEventListener('load',()=>{
