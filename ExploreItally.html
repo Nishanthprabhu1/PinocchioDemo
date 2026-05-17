@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Explore Italy</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://unpkg.com" crossorigin>
+<link rel="dns-prefetch" href="https://unpkg.com">
+
+<!-- ① Preload the module bytes while fonts/CSS parse — cached before first AR tap -->
+<link rel="modulepreload" href="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js">
+
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<!-- ② model-viewer NOT loaded here — lazy import() on first interaction -->
+
+<style>
+:root{
+  --ink:#080604;
+  --paper:#F0E8D5;
+  --gold:#B8973A;
+  --gold2:#D4AE52;
+  --ff-en:'Cormorant Garamond',serif;
+  --ff-ui:'DM Sans',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--ink);
+  color:var(--paper);
+  font-family:var(--ff-ui);
+  height:100svh;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+
+.back-btn{
+  position:fixed;
+  left:16px;
+  top:max(env(safe-area-inset-top),14px);
+  z-index:100;
+  text-decoration:none;
+  color:var(--paper);
+  background:rgba(255,255,255,.08);
+  padding:10px 16px;
+  border-radius:30px;
+  border:1px solid rgba(255,255,255,.15);
+  backdrop-filter:blur(12px);
+  font-size:11px;
+}
+
+.nav-header{
+  padding:max(env(safe-area-inset-top),20px) 20px 16px;
+  text-align:center;
+  border-bottom:1px solid rgba(184,151,58,.2);
+}
+.nav-header h1{
+  font-family:var(--ff-en);
+  font-size:clamp(28px,6vw,40px);
+  color:var(--gold2);
+  letter-spacing:.08em;
+}
+.nav-header p{
+  margin-top:6px;
+  font-size:10px;
+  letter-spacing:.28em;
+  text-transform:uppercase;
+  opacity:.6;
+}
+
+.explorer-grid{
+  flex:1;
+  display:flex;
+  align-items:center;
+  gap:18px;
+  padding:20px 16px;
+  overflow-x:auto;
+  overflow-y:hidden;
+  scroll-snap-type:x mandatory;
+  scrollbar-width:none;
+}
+.explorer-grid::-webkit-scrollbar{display:none}
+
+.landmark-card{
+  flex:0 0 min(85vw,360px);
+  height:min(64vh,540px);
+  background:#0f0c09;
+  border:1px solid rgba(184,151,58,.25);
+  border-radius:18px;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  scroll-snap-align:center;
+}
+
+.model-wrap{
+  flex:1;
+  position:relative;
+  overflow:hidden;
+  background:radial-gradient(circle at center,#1b160c 0%,#080604 100%);
+}
+
+/* Poster fades out when model is active */
+.model-poster{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  z-index:1;
+  transition:.45s;
+}
+.model-wrap.model-active .model-poster{
+  opacity:0;
+  pointer-events:none;
+}
+
+/* ③ Single persistent model-viewer per card — opacity transition, never recreated */
+model-viewer{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .4s;
+  z-index:2;
+  --poster-color:transparent;
+}
+model-viewer::part(default-progress-bar),
+model-viewer::part(default-ar-button){display:none}
+
+.model-wrap.model-active model-viewer{
+  opacity:1;
+  pointer-events:auto;
+}
+
+.pinch-hint{
+  position:absolute;
+  bottom:12px;
+  left:50%;
+  transform:translateX(-50%);
+  background:rgba(8,6,4,.8);
+  border:1px solid rgba(184,151,58,.35);
+  padding:7px 14px;
+  border-radius:30px;
+  font-size:9px;
+  letter-spacing:.12em;
+  color:var(--gold2);
+  z-index:10;
+  opacity:0;
+  white-space:nowrap;
+  pointer-events:none;
+}
+.model-wrap.model-active .pinch-hint{
+  opacity:1;
+  animation:fadeout 4s ease 2s forwards;
+}
+@keyframes fadeout{to{opacity:0}}
+
+.ar-badge{
+  position:absolute;
+  right:12px;
+  top:12px;
+  padding:6px 12px;
+  border-radius:30px;
+  font-size:9px;
+  background:rgba(8,6,4,.8);
+  border:1px solid var(--gold);
+  color:var(--gold2);
+  opacity:0;
+  transform:translateY(-8px);
+  transition:.4s;
+  z-index:8;
+}
+.ar-badge.visible{
+  opacity:1;
+  transform:translateY(0);
+}
+
+/* ④ Loading overlay — shown while module or GLB is fetching */
+.ar-loading{
+  position:absolute;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  gap:12px;
+  background:rgba(8,6,4,.85);
+  z-index:20;
+}
+.ar-loading.show{display:flex}
+
+.loader-ring{
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  border:2px solid rgba(184,151,58,.15);
+  border-top-color:var(--gold2);
+  animation:spin .9s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.loader-bar-track{
+  width:110px;
+  height:3px;
+  background:rgba(184,151,58,.18);
+  border-radius:10px;
+  overflow:hidden;
+}
+.loader-bar-fill{
+  height:100%;
+  width:0;
+  background:var(--gold2);
+  transition:width .1s linear;
+}
+.loader-label{
+  font-size:10px;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+}
+
+.landmark-info{
+  padding:16px;
+  background:#11100d;
+}
+.landmark-name{
+  font-family:var(--ff-en);
+  font-size:28px;
+  margin-bottom:4px;
+}
+.landmark-city{
+  font-size:10px;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--gold);
+  margin-bottom:14px;
+}
+
+.btn-row{display:flex;gap:8px}
+.action-btn{
+  border:none;
+  border-radius:10px;
+  padding:13px;
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  min-height:46px;
+  cursor:pointer;
+  transition:opacity .2s;
+}
+.action-btn:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
+.view3d-btn{
+  background:rgba(184,151,58,.14);
+  color:var(--gold2);
+  border:1px solid rgba(184,151,58,.35);
+}
+.view3d-btn.is-active{background:rgba(184,151,58,.25)}
+.ar-btn{
+  flex:1;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+  color:#000;
+}
+.ar-btn.error{
+  background:rgba(184,151,58,.15);
+  color:rgba(212,174,82,.5);
+  border:1px solid rgba(184,151,58,.2);
+}
+
+.retry-btn{
+  display:none;
+  position:absolute;
+  bottom:16px;
+  left:50%;
+  transform:translateX(-50%);
+  background:rgba(184,151,58,.15);
+  border:1px solid rgba(184,151,58,.4);
+  color:var(--gold2);
+  border-radius:30px;
+  padding:8px 20px;
+  font-size:10px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  cursor:pointer;
+  z-index:15;
+  white-space:nowrap;
+}
+.retry-btn.show{display:block}
+
+.error-overlay{
+  position:absolute;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  gap:10px;
+  background:rgba(8,6,4,.7);
+  z-index:12;
+}
+.error-overlay.show{display:flex}
+.error-icon{font-size:28px;opacity:.5}
+.error-msg{
+  font-size:9px;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  opacity:.5;
+  text-align:center;
+  padding:0 20px;
+}
+
+.scroll-dots{
+  display:flex;
+  justify-content:center;
+  gap:8px;
+  padding:12px 0 max(env(safe-area-inset-bottom),14px);
+}
+.dot{
+  width:6px;height:6px;border-radius:50%;
+  background:rgba(184,151,58,.25);
+  transition:transform .2s, background .2s;
+}
+.dot.active{
+  background:var(--gold2);
+  transform:scale(1.35);
+}
+</style>
+</head>
+<body>
+
+<a href="FunZone.html" class="back-btn">← Back</a>
+
+<div class="nav-header">
+  <h1>Explore Italy</h1>
+  <p>Augmented Reality Landmarks</p>
+</div>
+
+<div class="explorer-grid" id="grid"></div>
+<div class="scroll-dots" id="dots"></div>
+
+<script>
+/* ─────────────────────────────────────────────
+   LANDMARKS DATA
+───────────────────────────────────────────── */
+const landmarks = [
+  { name:'Amalfi Coast',           city:'Italy', folder:'amalficoast',           file:'amalficoast',           hasUsdz:true },
+  { name:'Colosseum',              city:'Italy', folder:'colosseum',              file:'colosseum',              hasUsdz:true },
+  { name:'Duomo Museum',           city:'Italy', folder:'duomo-museum',           file:'duomo-museum',           hasUsdz:true },
+  { name:'Leaning Tower of Pisa',  city:'Italy', folder:'leaning-tower-of-pisa', file:'leaning-tower-of-pisa', hasUsdz:true },
+];
+
+const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+              (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+/* ─────────────────────────────────────────────
+   ① MODEL-VIEWER MODULE — lazy-loaded once
+   Cached promise so the 500KB+ script only
+   downloads once, no matter how many cards.
+───────────────────────────────────────────── */
+let mvModulePromise = null;
+function ensureMV() {
+  if (!mvModulePromise) {
+    mvModulePromise = import('https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js');
+  }
+  return mvModulePromise;
+}
+
+/* ─────────────────────────────────────────────
+   ② GLB PREFETCH — start fetching bytes early
+   Called on card hover/touchstart so the file
+   is already in cache when the user taps 3D/AR.
+   Uses <link rel="prefetch"> — low-priority,
+   background fetch, no JS thread blocking.
+───────────────────────────────────────────── */
+const prefetched = new Set();
+function prefetchGlb(glbPath) {
+  if (!glbPath || prefetched.has(glbPath)) return;
+  prefetched.add(glbPath);
+  const link = document.createElement('link');
+  link.rel = 'prefetch';
+  link.href = glbPath;
+  link.as = 'fetch';
+  link.crossOrigin = 'anonymous';
+  document.head.appendChild(link);
+}
+
+/* ─────────────────────────────────────────────
+   BUILD CARDS
+───────────────────────────────────────────── */
+const grid   = document.getElementById('grid');
+const dotsEl = document.getElementById('dots');
+const state  = {};
+
+landmarks.forEach((l, i) => {
+  const base     = `ExploreItally/${l.folder}/${l.file}`;
+  const glbPath  = `${base}.glb`;
+  const usdzPath = `${base}.usdz`;
+  const pngPath  = `${base}.png`;
+
+  /* Card HTML — model-viewer element included in markup so the browser
+     can schedule its WebGL context early (no DOM insertion cost later) */
+  const card = document.createElement('div');
+  card.className = 'landmark-card';
+  card.innerHTML = `
+  <div class="model-wrap" id="wrap-${i}">
+
+    <img class="model-poster" src="${pngPath}" alt="${l.name}"
+         loading="${i === 0 ? 'eager' : 'lazy'}"
+         onerror="this.style.opacity='.15'">
+
+    <!-- ③ Persistent model-viewer — never destroyed, just src-swapped -->
+    <model-viewer
+      id="mv-${i}"
+      ${isIOS && l.hasUsdz ? `ios-src="${usdzPath}"` : ''}
+      ar
+      ar-modes="${isIOS ? 'quick-look webxr' : 'scene-viewer webxr'}"
+      ar-placement="floor"
+      ar-scale="auto"
+      loading="lazy"
+      reveal="interaction"
+      environment-image="neutral"
+      shadow-intensity="1.2"
+      shadow-softness="0.8"
+      exposure="1.1"
+      camera-controls
+      touch-action="pan-y"
+      min-camera-orbit="auto auto 8%"
+      max-camera-orbit="auto auto 900%"
+      field-of-view="18deg"
+      interpolation-decay="200"
+      interaction-prompt="none">
+    </model-viewer>
+
+    <!-- Loading overlay (shown while module + GLB load) -->
+    <div class="ar-loading" id="arload-${i}">
+      <div class="loader-ring"></div>
+      <div class="loader-bar-track"><div class="loader-bar-fill" id="bar-${i}"></div></div>
+      <div class="loader-label" id="lbl-${i}">Loading model…</div>
+    </div>
+
+    <div class="error-overlay" id="erroverlay-${i}">
+      <div class="error-icon">⚠︎</div>
+      <div class="error-msg" id="errmsg-${i}">Model unavailable</div>
+    </div>
+
+    <button class="retry-btn" id="retry-${i}">↺ Retry</button>
+
+    <div class="ar-badge" id="badge-${i}">✦ AR Ready</div>
+    <div class="pinch-hint">⟺ Pinch Zoom • Drag Rotate • Scale in AR</div>
+  </div>
+
+  <div class="landmark-info">
+    <div class="landmark-name">${l.name}</div>
+    <div class="landmark-city">${l.city}</div>
+    <div class="btn-row">
+      <button class="action-btn view3d-btn" id="v3dbtn-${i}">⬡ 3D</button>
+      <button class="action-btn ar-btn"     id="arbtn-${i}">🪐 View in Real World</button>
+    </div>
+  </div>`;
+
+  grid.appendChild(card);
+
+  /* Dot */
+  const dot = document.createElement('div');
+  dot.className = 'dot' + (i === 0 ? ' active' : '');
+  dotsEl.appendChild(dot);
+
+  /* ④ Wire up state after paint */
+  requestAnimationFrame(() => {
+    const mv         = document.getElementById(`mv-${i}`);
+    const arload     = document.getElementById(`arload-${i}`);
+    const bar        = document.getElementById(`bar-${i}`);
+    const lbl        = document.getElementById(`lbl-${i}`);
+    const badge      = document.getElementById(`badge-${i}`);
+    const arbtn      = document.getElementById(`arbtn-${i}`);
+    const v3dbtn     = document.getElementById(`v3dbtn-${i}`);
+    const wrap       = document.getElementById(`wrap-${i}`);
+    const erroverlay = document.getElementById(`erroverlay-${i}`);
+    const errmsg     = document.getElementById(`errmsg-${i}`);
+    const retrybtn   = document.getElementById(`retry-${i}`);
+
+    state[i] = {
+      mv, arload, bar, lbl, badge, arbtn, v3dbtn, wrap,
+      erroverlay, errmsg, retrybtn,
+      glbPath,
+      ready:false, loading:false, showing3D:false, errored:false,
+      pending3D:false, pendingAR:false,
+    };
+
+    /* ── model-viewer events ── */
+    mv.addEventListener('progress', e => {
+      const pct = Math.round(e.detail.totalProgress * 100);
+      bar.style.width = pct + '%';
+      lbl.textContent = `Loading ${pct}%`;
+    });
+
+    mv.addEventListener('load', () => {
+      const s = state[i];
+      s.ready = true; s.loading = false; s.errored = false;
+      arload.classList.remove('show');
+      erroverlay.classList.remove('show');
+      retrybtn.classList.remove('show');
+      badge.classList.add('visible');
+      if (s.pending3D) { s.pending3D = false; activate3DView(i); }
+      if (s.pendingAR) { s.pendingAR = false; mv.activateAR(); }
+    });
+
+    mv.addEventListener('error', () => {
+      const s = state[i];
+      s.ready = false; s.loading = false; s.errored = true;
+      arload.classList.remove('show');
+
+      fetch(s.glbPath, { method:'HEAD' })
+        .then(r => {
+          errmsg.textContent = r.ok ? 'Model file may be corrupted' : `File not found (${r.status})`;
+        })
+        .catch(() => { errmsg.textContent = 'Serve via localhost, not file://'; });
+
+      erroverlay.classList.add('show');
+      retrybtn.classList.add('show');
+      arbtn.disabled = true;
+      arbtn.classList.add('error');
+      arbtn.textContent = 'Unavailable';
+    });
+
+    /* ── Button handlers ── */
+    v3dbtn.onclick = () => toggle3D(i);
+    arbtn.onclick  = () => launchAR(i);
+    retrybtn.onclick = () => {
+      arbtn.disabled = false;
+      arbtn.classList.remove('error');
+      arbtn.textContent = '🪐 View in Real World';
+      startLoad(i);
+    };
+
+    /* ⑤ Prefetch GLB on hover/touch of the whole card so bytes are
+       downloading BEFORE the user consciously taps a button */
+    const doPrefetch = () => {
+      prefetchGlb(glbPath);
+      ensureMV(); // also warm up module fetch
+    };
+    card.addEventListener('mouseenter', doPrefetch, { once:true, passive:true });
+    card.addEventListener('touchstart',  doPrefetch, { once:true, passive:true });
+  });
+});
+
+/* ─────────────────────────────────────────────
+   LOAD LOGIC
+───────────────────────────────────────────── */
+function startLoad(i) {
+  const s = state[i];
+  if (s.loading || s.ready) return;
+  s.loading = true;
+  s.errored = false;
+  s.erroverlay.classList.remove('show');
+  s.retrybtn.classList.remove('show');
+  s.arload.classList.add('show');
+  s.bar.style.width = '0%';
+  s.lbl.textContent = 'Loading model…';
+
+  /* ⑥ Load module first, then assign src — guarantees custom element is
+     defined before model-viewer tries to parse the GLB */
+  ensureMV().then(() => {
+    const mv = s.mv;
+    // Set loading="eager" so model-viewer actually starts fetching
+    mv.setAttribute('loading', 'eager');
+    // Only update src if not already set (avoids redundant reload)
+    if (!mv.getAttribute('src')) {
+      mv.setAttribute('src', s.glbPath);
+    } else {
+      // Force reload after an error by briefly clearing src
+      mv.setAttribute('src', '');
+      requestAnimationFrame(() => mv.setAttribute('src', s.glbPath));
+    }
+  });
+}
+
+/* ─────────────────────────────────────────────
+   3D VIEW
+───────────────────────────────────────────── */
+function activate3DView(i) {
+  const s = state[i];
+  s.showing3D = true;
+  s.wrap.classList.add('model-active');
+  s.v3dbtn.classList.add('is-active');
+  s.v3dbtn.innerHTML = '✕ 2D';
+  s.wrap.addEventListener('touchstart', stopProp, { passive:false });
+}
+
+function deactivate3DView(i) {
+  const s = state[i];
+  s.showing3D = false;
+  s.wrap.classList.remove('model-active');
+  s.v3dbtn.classList.remove('is-active');
+  s.v3dbtn.innerHTML = '⬡ 3D';
+  s.wrap.removeEventListener('touchstart', stopProp);
+}
+
+function stopProp(e) { e.stopPropagation(); }
+
+function toggle3D(i) {
+  const s = state[i];
+  if (s.showing3D) { deactivate3DView(i); return; }
+  if (s.ready) { activate3DView(i); }
+  else { s.pending3D = true; startLoad(i); }
+}
+
+/* ─────────────────────────────────────────────
+   AR LAUNCH
+───────────────────────────────────────────── */
+function launchAR(i) {
+  const s = state[i];
+  if (s.ready) { s.mv.activateAR(); }
+  else { s.pendingAR = true; startLoad(i); }
+}
+
+/* ─────────────────────────────────────────────
+   SCROLL DOTS
+───────────────────────────────────────────── */
+const dots = dotsEl.querySelectorAll('.dot');
+grid.addEventListener('scroll', () => {
+  const center = grid.scrollLeft + grid.clientWidth / 2;
+  let closest = 0, minDist = Infinity;
+  grid.querySelectorAll('.landmark-card').forEach((card, ci) => {
+    const dist = Math.abs((card.offsetLeft + card.offsetWidth / 2) - center);
+    if (dist < minDist) { minDist = dist; closest = ci; }
+  });
+  dots.forEach((d, di) => d.classList.toggle('active', di === closest));
+
+  /* ⑦ Prefetch the GLB of the card closest to center while user is browsing */
+  if (state[closest]) prefetchGlb(state[closest].glbPath);
+}, { passive:true });
+
+/* ─────────────────────────────────────────────
+   ⑧ Prefetch first card immediately (above the fold)
+───────────────────────────────────────────── */
+prefetchGlb(`ExploreItally/${landmarks[0].folder}/${landmarks[0].file}.glb`);
+ensureMV(); // start module download right away — it'll be cached by first tap
+</script>
+
+</body>
+</html>
