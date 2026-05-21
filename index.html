@@ -487,23 +487,17 @@
 
       <!-- Persistent model-viewer — reused across opens to avoid cold-start -->
       <model-viewer id="main-mv"
-  ar
-  ar-modes="webxr scene-viewer quick-look"
-  ar-placement="floor"
-  ar-scale="fixed"
-  camera-controls
-  touch-action="pan-y"
-  shadow-intensity="1"
-  shadow-softness="0.8"
-  environment-image="neutral"
-  exposure="1"
-  camera-orbit="0deg 75deg 105%"
-  min-camera-orbit="auto auto 60%"
-  max-camera-orbit="auto auto 140%"
-  interaction-prompt="none"
-  loading="eager"
-  reveal="interaction">
-</model-viewer>
+        ar ar-modes="webxr scene-viewer quick-look"
+        ar-placement="floor" ar-scale="fixed"
+        camera-controls touch-action="pan-y"
+        shadow-intensity="1" shadow-softness="0.8"
+        environment-image="neutral" exposure="1"
+        camera-orbit="0deg 75deg 105%"
+        min-camera-orbit="auto auto 60%"
+        max-camera-orbit="auto auto 140%"
+        interaction-prompt="none"
+        loading="eager" reveal="auto">
+      </model-viewer>
 
       <!-- Photo fallback (shown before model loads) -->
       <div id="modal-photo" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;z-index:1;"></div>
@@ -632,28 +626,7 @@ function prefetchGlb(glbPath) {
 }
 
 /* Preload poster images for above-the-fold cards (called after CSV parsed) */
-function preloadAboveFold(dishes, count = 4) {
-  const idle = window.requestIdleCallback || (cb => setTimeout(cb, 200));
-
-  idle(() => {
-    dishes.slice(0, count).forEach(d => {
-
-      // Preload poster image
-      if (d.posterPath) {
-        const img = document.createElement('link');
-        img.rel = 'preload';
-        img.as = 'image';
-        img.href = d.posterPath;
-        document.head.appendChild(img);
-      }
-
-      // Prefetch GLB immediately
-      if (d.glbPath) {
-        prefetchGlb(d.glbPath);
-      }
-    });
-  });
-}
+function preloadAboveFoldPosters(dishes, count = 4) {
   const idle = window.requestIdleCallback || (cb => setTimeout(cb, 200));
   idle(() => {
     dishes.slice(0, count).forEach(d => {
@@ -812,12 +785,7 @@ function renderItems() {
     container.querySelectorAll('.menu-card').forEach(card => {
       const d = allDishes.find(x=>x.id===card.dataset.id);
       if (!d) return;
-      const doPrefetch = () => {
-  prefetchGlb(d.glbPath);
-
-  // Ensure model-viewer already parsed
-  ensureModelViewerLoaded();
-};
+      const doPrefetch = () => { prefetchGlb(d.glbPath); ensureModelViewerLoaded(); };
       card.addEventListener('mouseenter', doPrefetch, { once:true, passive:true });
       card.addEventListener('touchstart',  doPrefetch, { once:true, passive:true });
       card.addEventListener('click', ()=>openModal(card.dataset.id));
@@ -849,10 +817,7 @@ function setPhoto(d) {
   if (d.posterPath) {
     elPhoto.innerHTML = `
       <img src="${d.posterPath}" alt="${d.name}"
-     style="width:100%;height:100%;object-fit:cover;"
-     loading="eager"
-     decoding="sync"
-     fetchpriority="high"
+           style="width:100%;height:100%;object-fit:cover;" loading="eager" decoding="async"
            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
       <span style="display:none;font-size:80px;align-items:center;justify-content:center;width:100%;height:100%;">${d.emoji}</span>`;
   } else {
@@ -889,14 +854,8 @@ function openModal(id) {
     ensureModelViewerLoaded().then(() => {
       if (currentDish?.id !== d.id) return;
 
-      // Reset orbit every open
-elMV.setAttribute('camera-orbit', '0deg 75deg 105%');
-
-// Add poster for native loading UI
-elMV.setAttribute('poster', d.posterPath || '');
-
-const s = (d.scale ?? 1).toFixed(6);
-elMV.setAttribute('scale', `${s} ${s} ${s}`);
+      const s = (d.scale??1).toFixed(6);
+      elMV.setAttribute('scale', `${s} ${s} ${s}`);
 
       if (isIOS && d.usdzPath) {
         elMV.setAttribute('ios-src', d.usdzPath);
@@ -939,17 +898,9 @@ elMV.setAttribute('scale', `${s} ${s} ${s}`);
 
 function onMVLoaded(d) {
   if (currentDish?.id !== d.id) return;
-
   hideLoader();
-
-  // Fade model in first
+  elPhoto.style.display = 'none';
   elMV.classList.add('mv-ready');
-
-  // Keep photo visible slightly longer
-  setTimeout(() => {
-    elPhoto.style.display = 'none';
-  }, 400);
-
   elArBadge.classList.add('visible');
 }
 
@@ -1015,7 +966,7 @@ async function init() {
     if (!allDishes.length) throw new Error('No dishes found.');
 
     // Preload above-fold poster images in idle time
-    preloadAboveFold(allDishes);
+    preloadAboveFoldPosters(allDishes);
 
     // Replace skeleton in a single synchronous paint
     renderTabs();
