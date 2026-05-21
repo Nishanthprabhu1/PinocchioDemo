@@ -6,21 +6,6 @@
   <title>Italian Cuisine — AR Menu</title>
   <meta name="description" content="Interactive AR menu for Italian Cuisine — authentic Italian cuisine with 3D dish previews." />
 
-  <!--
-    PERFORMANCE STRATEGY
-    ─────────────────────────────────────────────────────────────────────
-    1. RENDER-BLOCKING fonts replaced with font-display:swap + preconnect
-    2. CSV fetch kicked off immediately via <link rel="preload"> + fetch()
-       in an inline script — fires before parser reaches the main <script>
-    3. model-viewer module NOT preloaded (it's 350 KB; we lazy-import on
-       first AR tap only, same as before, but we removed the bad
-       <link rel="modulepreload"> that was downloading it on every page)
-    4. Skeleton UI renders instantly — no waiting for CSV
-    5. Poster images get <link rel="preload"> once CSV resolves (above fold)
-    6. requestIdleCallback used for non-critical work (prefetch, etc.)
-    ─────────────────────────────────────────────────────────────────────
-  -->
-
   <!-- STEP 1 — DNS / TCP warm-up (free, parser-time) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -34,7 +19,6 @@
 
   <!-- STEP 3 — Fonts: non-render-blocking (display=swap) -->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;600;700&family=Noto+Sans+JP:wght@300;400;500&family=Cinzel:wght@400;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
-  <!-- Instant fallback for no-JS / first paint -->
   <noscript>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;600;700&family=Noto+Sans+JP:wght@300;400;500&family=Cinzel:wght@400;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet" />
   </noscript>
@@ -42,7 +26,6 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* ── SYSTEM FONT STACK (instant) — web fonts swap in later ── */
     :root {
       --font-serif:  'Noto Serif JP', 'Georgia', serif;
       --font-sans:   'Noto Sans JP', 'Hiragino Sans', 'Helvetica Neue', sans-serif;
@@ -89,7 +72,6 @@
       background: linear-gradient(145deg, #3d0f13 0%, #5a1520 50%, #3d0f13 100%);
       color: #f5ede0; text-align: center;
       padding: max(env(safe-area-inset-top), 2.5rem) 1rem 2.5rem;
-      /* Content-visibility: skip layout for offscreen — keeps header always visible */
     }
     .site-header .seigaiha-bg { opacity: 0.07; }
     .site-header::before {
@@ -188,7 +170,7 @@
     /* ── MAIN ── */
     .main { max-width: 740px; margin: 0 auto; padding: 1.5rem 1rem 5rem; }
 
-    /* ── SKELETON CARDS (instant paint while CSV loads) ── */
+    /* ── SKELETON CARDS ── */
     .skeleton-grid { display: flex; flex-direction: column; gap: 10px; }
     .skeleton-card {
       background: rgba(243,232,215,0.5); border-radius: 1px;
@@ -231,10 +213,8 @@
       background: rgba(243,232,215,0.96); border: 1px solid rgba(214,178,126,0.18);
       border-left: 3px solid transparent; border-radius: 1px; padding: 1.1rem 1.25rem;
       cursor: pointer;
-      /* Use will-change only on hover to avoid compositing all cards upfront */
       transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s, background 0.2s;
       -webkit-tap-highlight-color: transparent; position: relative; overflow: hidden;
-      /* content-visibility for cards below fold — browser skips layout until needed */
       content-visibility: auto;
       contain-intrinsic-size: auto 100px;
     }
@@ -257,7 +237,6 @@
     }
     .card-thumb img {
       width: 100%; height: 100%; object-fit: cover; display: block;
-      /* Decode async so it doesn't block main thread */
       decoding: async;
     }
     .ar-pill {
@@ -447,10 +426,8 @@
   </span>
 </header>
 
-<!-- Tabs render instantly with static HTML; JS enhances click handling -->
 <nav class="tabs-wrap" aria-label="Menu categories">
   <div class="tabs-inner" id="tabs-inner">
-    <!-- Pre-rendered tabs — no waiting for JS -->
     <button class="tab-btn active" data-cat="all">All</button>
     <button class="tab-btn" data-cat="starter">Starters</button>
     <button class="tab-btn" data-cat="main-course">Main Course</button>
@@ -459,10 +436,6 @@
 </nav>
 
 <main class="main">
-  <!--
-    SKELETON UI — visible instantly, replaced once CSV arrives.
-    4 cards = enough to fill a phone screen without layout shift.
-  -->
   <div id="items-container">
     <div class="skeleton-grid" id="skeleton-ui" aria-hidden="true">
       <div class="skeleton-card"><div class="sk-row"><div class="sk-thumb"></div><div class="sk-body"><div class="sk-line wide"></div><div class="sk-line full"></div><div class="sk-line full"></div><div class="sk-line short"></div></div></div></div>
@@ -473,7 +446,7 @@
   </div>
 </main>
 
-<!-- MODAL (static DOM — never rebuilt, only updated) -->
+<!-- MODAL -->
 <div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-label="Dish detail">
   <div class="modal-card">
     <div class="modal-viewer-wrap" id="modal-viewer-wrap">
@@ -485,7 +458,7 @@
         <div class="mv-loader-text">LOADING MODEL</div>
       </div>
 
-      <!-- Persistent model-viewer — reused across opens to avoid cold-start -->
+      <!-- Persistent model-viewer — reused across opens -->
       <model-viewer id="main-mv"
         ar ar-modes="webxr scene-viewer quick-look"
         ar-placement="floor" ar-scale="fixed"
@@ -499,8 +472,8 @@
         loading="eager" reveal="auto">
       </model-viewer>
 
-      <!-- Photo fallback (shown before model loads) -->
-      <div id="modal-photo" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;z-index:1;"></div>
+      <!-- Photo fallback (visible while model loads, fades out after) -->
+      <div id="modal-photo" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;z-index:1;transition:opacity 0.4s ease;"></div>
 
       <div class="mv-ar-badge" id="mv-ar-badge">✦ AR Ready</div>
       <div class="scale-info"  id="scale-info">Actual portion size</div>
@@ -566,14 +539,10 @@ const CAT_LABELS = {
 };
 
 /* ─────────────────────────────────────────────
-   CSV FETCH — kicked off immediately, stored as
-   a Promise so renderItems() can await it even
-   if it resolves before init() runs.
-   Uses a 15-minute memory cache (sessionStorage
-   fallback for repeat visits in same tab).
+   CSV FETCH — kicked off immediately
 ───────────────────────────────────────────── */
 const CACHE_KEY = 'menu_csv_v1';
-const CACHE_TTL = 15 * 60 * 1000; // 15 min
+const CACHE_TTL = 15 * 60 * 1000;
 
 function getCachedCSV() {
   try {
@@ -588,7 +557,6 @@ function setCachedCSV(text) {
   try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), text })); } catch {}
 }
 
-// Start fetching IMMEDIATELY (parallel with parsing/rendering the static HTML above)
 const csvPromise = (async () => {
   const cached = getCachedCSV();
   if (cached) return cached;
@@ -600,7 +568,10 @@ const csvPromise = (async () => {
 })();
 
 /* ─────────────────────────────────────────────
-   model-viewer MODULE — lazy-loaded ONCE
+   FIX 1: model-viewer MODULE — load eagerly on
+   page start (during idle), not on first tap.
+   This eliminates the cold-start 350KB parse
+   delay that was happening after every tap.
 ───────────────────────────────────────────── */
 let mvModulePromise = null;
 function ensureModelViewerLoaded() {
@@ -609,6 +580,11 @@ function ensureModelViewerLoaded() {
   }
   return mvModulePromise;
 }
+
+// Kick off model-viewer load immediately during idle time —
+// by the time the user taps a card it will already be parsed and ready.
+const idleCallback = window.requestIdleCallback || (cb => setTimeout(cb, 200));
+idleCallback(() => ensureModelViewerLoaded());
 
 /* ─────────────────────────────────────────────
    GLB PREFETCH CACHE
@@ -625,15 +601,23 @@ function prefetchGlb(glbPath) {
   document.head.appendChild(link);
 }
 
-/* Preload poster images for above-the-fold cards (called after CSV parsed) */
-function preloadAboveFoldPosters(dishes, count = 4) {
-  const idle = window.requestIdleCallback || (cb => setTimeout(cb, 200));
-  idle(() => {
+/* ─────────────────────────────────────────────
+   FIX 2: Preload above-fold poster images AND
+   prefetch their GLB files together in one pass.
+   GLBs were previously only prefetched on hover
+   which is too late on mobile.
+───────────────────────────────────────────── */
+function preloadAboveFold(dishes, count = 4) {
+  idleCallback(() => {
     dishes.slice(0, count).forEach(d => {
-      if (!d.posterPath) return;
-      const link = document.createElement('link');
-      link.rel = 'preload'; link.as = 'image'; link.href = d.posterPath;
-      document.head.appendChild(link);
+      // Preload poster image
+      if (d.posterPath) {
+        const img = document.createElement('link');
+        img.rel = 'preload'; img.as = 'image'; img.href = d.posterPath;
+        document.head.appendChild(img);
+      }
+      // FIX 2: also prefetch GLB so it's in cache before first tap
+      if (d.glbPath) prefetchGlb(d.glbPath);
     });
   });
 }
@@ -728,7 +712,6 @@ function renderTabs() {
 const SVG_CUBE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`;
 
 function cardHTML(d, isAboveFold) {
-  // Above-the-fold images: eager + high priority. Below fold: lazy.
   const imgLoading = isAboveFold ? 'eager' : 'lazy';
   const fetchPriority = isAboveFold ? 'fetchpriority="high"' : '';
   const thumb = d.posterPath
@@ -777,15 +760,14 @@ function renderItems() {
     html = `<div class="items-grid">${filtered.map((d,i) => cardHTML(d, i < 4)).join('')}</div>`;
   }
 
-  // Single DOM write — avoids layout thrashing from incremental appends
   container.innerHTML = html;
 
-  // Wire up events after paint via rAF (keeps frame budget free)
   requestAnimationFrame(() => {
     container.querySelectorAll('.menu-card').forEach(card => {
       const d = allDishes.find(x=>x.id===card.dataset.id);
       if (!d) return;
-      const doPrefetch = () => { prefetchGlb(d.glbPath); ensureModelViewerLoaded(); };
+      // Prefetch remaining GLBs (above-fold already done; this covers below-fold on hover)
+      const doPrefetch = () => prefetchGlb(d.glbPath);
       card.addEventListener('mouseenter', doPrefetch, { once:true, passive:true });
       card.addEventListener('touchstart',  doPrefetch, { once:true, passive:true });
       card.addEventListener('click', ()=>openModal(card.dataset.id));
@@ -798,7 +780,7 @@ function renderItems() {
 }
 
 /* ─────────────────────────────────────────────
-   MODAL — persistent model-viewer element
+   MODAL
 ───────────────────────────────────────────── */
 const elMV        = document.getElementById('main-mv');
 const elMvLoader  = document.getElementById('mv-loader');
@@ -814,6 +796,7 @@ function showLoader()  { elMvLoader.classList.remove('hidden'); }
 function hideLoader()  { elMvLoader.classList.add('hidden'); }
 
 function setPhoto(d) {
+  elPhoto.style.opacity = '1';
   if (d.posterPath) {
     elPhoto.innerHTML = `
       <img src="${d.posterPath}" alt="${d.name}"
@@ -839,6 +822,9 @@ function openModal(id) {
   document.getElementById('modal-tags').innerHTML   = tagHTML(d);
   document.getElementById('modal-tags2').innerHTML  = tagHTML(d);
 
+  // FIX 5: Always reset camera angle between dishes
+  elMV.setAttribute('camera-orbit', '0deg 75deg 105%');
+
   elMV.classList.remove('mv-ready');
   elArBadge.classList.remove('visible');
   elScaleInfo.textContent = '';
@@ -851,6 +837,11 @@ function openModal(id) {
 
   if (d.glbPath) {
     prefetchGlb(d.glbPath);
+
+    // FIX 3: Set poster attribute so model-viewer shows something instantly
+    // while the GLB streams in, instead of a blank dark frame.
+    elMV.setAttribute('poster', d.posterPath || '');
+
     ensureModelViewerLoaded().then(() => {
       if (currentDish?.id !== d.id) return;
 
@@ -896,12 +887,26 @@ function openModal(id) {
   document.body.style.overflow = 'hidden';
 }
 
+/* ─────────────────────────────────────────────
+   FIX 4: Keep photo visible as background while
+   model fades in — fade photo out AFTER model
+   transition completes (400ms matches CSS).
+   This prevents the dark flash between photo
+   disappearing and model appearing.
+───────────────────────────────────────────── */
 function onMVLoaded(d) {
   if (currentDish?.id !== d.id) return;
   hideLoader();
-  elPhoto.style.display = 'none';
   elMV.classList.add('mv-ready');
   elArBadge.classList.add('visible');
+  elScaleInfo.textContent = 'Actual portion size';
+  // Let the model's opacity transition finish before hiding the photo beneath
+  setTimeout(() => {
+    if (currentDish?.id === d.id) {
+      elPhoto.style.opacity = '0';
+      setTimeout(() => { elPhoto.style.display = 'none'; }, 50);
+    }
+  }, 380);
 }
 
 elMV.addEventListener('load',  () => { if (currentDish) onMVLoaded(currentDish); });
@@ -923,12 +928,6 @@ function closeModal() {
   currentDish = null;
   if (typeof elMV.pause === 'function') elMV.pause();
 }
-
-document.getElementById('modal-overlay').addEventListener('transitionend', () => {
-  if (document.getElementById('modal-overlay').classList.contains('open')) {
-    if (typeof elMV.play === 'function') elMV.play();
-  }
-});
 
 document.addEventListener('visibilitychange', () => {
   document.hidden
@@ -952,23 +951,19 @@ document.getElementById('lang-select').addEventListener('change', e => {
 });
 
 /* ─────────────────────────────────────────────
-   INIT — awaits the already-in-flight csvPromise
-   No double fetch. Skeleton stays visible until
-   data is ready, then replaced in one paint.
+   INIT
 ───────────────────────────────────────────── */
 async function init() {
   const container = document.getElementById('items-container');
   try {
-    // csvPromise was already started at page load — just await the result
     const text = await csvPromise;
     rawRows    = parseCSV(text);
     allDishes  = rawRows.map(rowToDish).filter(d=>d.name);
     if (!allDishes.length) throw new Error('No dishes found.');
 
-    // Preload above-fold poster images in idle time
-    preloadAboveFoldPosters(allDishes);
+    // FIX 2: Preload above-fold images + prefetch their GLBs
+    preloadAboveFold(allDishes);
 
-    // Replace skeleton in a single synchronous paint
     renderTabs();
     renderItems();
 
@@ -987,7 +982,8 @@ async function init() {
       </div>`;
   }
 }
-  document.addEventListener("contextmenu", e => { e.preventDefault(); });
+
+document.addEventListener("contextmenu", e => { e.preventDefault(); });
 document.addEventListener("keydown", e => {
   if (
     e.key === "F12" ||
@@ -997,8 +993,6 @@ document.addEventListener("keydown", e => {
     e.preventDefault();
   }
 });
-
-
 
 init();
 </script>
