@@ -460,17 +460,26 @@
 
       <!-- Persistent model-viewer — reused across opens -->
       <model-viewer id="main-mv"
-        ar ar-modes="webxr scene-viewer quick-look"
-        ar-placement="floor" ar-scale="fixed"
-        camera-controls touch-action="pan-y"
-        shadow-intensity="1" shadow-softness="0.8"
-        environment-image="neutral" exposure="1"
-        camera-orbit="0deg 75deg 105%"
-        min-camera-orbit="auto auto 60%"
-        max-camera-orbit="auto auto 140%"
-        interaction-prompt="none"
-        loading="eager" reveal="auto">
-      </model-viewer>
+  scale="1 1 1"
+  auto-rotate
+  camera-target="auto auto auto"
+  ar
+  ar-modes="webxr scene-viewer quick-look"
+  ar-placement="floor"
+  ar-scale="fixed"
+  camera-controls
+  touch-action="pan-y"
+  shadow-intensity="1"
+  shadow-softness="0.8"
+  environment-image="neutral"
+  exposure="1"
+  camera-orbit="0deg 75deg 105%"
+  min-camera-orbit="auto auto 60%"
+  max-camera-orbit="auto auto 140%"
+  interaction-prompt="none"
+  loading="eager"
+  reveal="auto">
+</model-viewer>
 
       <!-- Photo fallback (visible while model loads, fades out after) -->
       <div id="modal-photo" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;z-index:1;transition:opacity 0.4s ease;"></div>
@@ -509,10 +518,10 @@ const ASSETS_BASE = '3d-model';
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTEkmIGoRgD1rQNmDgmY3lvB7WBOg86iOHHrS0MJ6qQiReuDHsUyX3YV7KoWXxTbefyBUWPTHpvUOt3/pub?output=csv';
 
 const LOCAL_ASSETS = {
-  'pistachio-sauce-bigne-with-ricotta': { folder:'Pistachio-Sauce-Bigne-with-Ricotta', file:'Pistachio-Sauce-Bigne-with-Ricotta', scale: "1 1 1", rotation: "90 90 90"  },
-  'pinocchio-tiramisu':                 { folder:'Pinocchio-Tiramisu',                 file:'Pinocchio-Tiramisu',                 scale: "4 4 4", rotation: "90 90 90"    },
-  'cheesy-green-lasagne':               { folder:'Cheesy-Green-Lasagne',               file:'Cheesy-Green-Lasagne',               scale: "4 4 4", rotation: "90 90 90"   },
-  'fried-calamari':                     { folder:'Fried-Calamari',                     file:'Fried-Calamari',                     scale: "4 4 4", rotation: "90 90 90"   },
+  'pistachio-sauce-bigne-with-ricotta': { folder:'Pistachio-Sauce-Bigne-with-Ricotta', file:'Pistachio-Sauce-Bigne-with-Ricotta', scale: "1 1 1",  },
+  'pinocchio-tiramisu':                 { folder:'Pinocchio-Tiramisu',                 file:'Pinocchio-Tiramisu',                 scale: "4 4 4",    },
+  'cheesy-green-lasagne':               { folder:'Cheesy-Green-Lasagne',               file:'Cheesy-Green-Lasagne',               scale: "4 4 4",   },
+  'fried-calamari':                     { folder:'Fried-Calamari',                     file:'Fried-Calamari',                     scale: "4 4 4",   },
 };
 
 const EMOJI_MAP = {
@@ -847,10 +856,10 @@ function openModal(id) {
 
   // SCALE FIX
 if (typeof d.scale === 'string') {
-  elMV.setAttribute('scale', d.scale);
+  elMV.scale = d.scale;
 } else {
   const s = (d.scale ?? 1).toFixed(6);
-  elMV.setAttribute('scale', `${s} ${s} ${s}`);
+  elMV.scale = `${s} ${s} ${s}`;
 }
 
   // ROTATION FIX
