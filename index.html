@@ -509,10 +509,10 @@ const ASSETS_BASE = '3d-model';
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTEkmIGoRgD1rQNmDgmY3lvB7WBOg86iOHHrS0MJ6qQiReuDHsUyX3YV7KoWXxTbefyBUWPTHpvUOt3/pub?output=csv';
 
 const LOCAL_ASSETS = {
-  'pistachio-sauce-bigne-with-ricotta': { folder:'Pistachio-Sauce-Bigne-with-Ricotta', file:'Pistachio-Sauce-Bigne-with-Ricotta', scale: "4 4 4", },
-  'pinocchio-tiramisu':                 { folder:'Pinocchio-Tiramisu',                 file:'Pinocchio-Tiramisu',                 scale: "4 4 4",   },
-  'cheesy-green-lasagne':               { folder:'Cheesy-Green-Lasagne',               file:'Cheesy-Green-Lasagne',               scale: "4 4 4",  },
-  'fried-calamari':                     { folder:'Fried-Calamari',                     file:'Fried-Calamari',                     scale: "4 4 4",  },
+  'pistachio-sauce-bigne-with-ricotta': { folder:'Pistachio-Sauce-Bigne-with-Ricotta', file:'Pistachio-Sauce-Bigne-with-Ricotta', scale: "4 4 4", rotation: "90 90 90"  },
+  'pinocchio-tiramisu':                 { folder:'Pinocchio-Tiramisu',                 file:'Pinocchio-Tiramisu',                 scale: "4 4 4", rotation: "90 90 90"    },
+  'cheesy-green-lasagne':               { folder:'Cheesy-Green-Lasagne',               file:'Cheesy-Green-Lasagne',               scale: "4 4 4", rotation: "90 90 90"   },
+  'fried-calamari':                     { folder:'Fried-Calamari',                     file:'Fried-Calamari',                     scale: "4 4 4", rotation: "90 90 90"   },
 };
 
 const EMOJI_MAP = {
@@ -843,23 +843,33 @@ function openModal(id) {
     elMV.setAttribute('poster', d.posterPath || '');
 
     ensureModelViewerLoaded().then(() => {
-      if (currentDish?.id !== d.id) return;
+  if (currentDish?.id !== d.id) return;
 
-      const s = (d.scale??1).toFixed(6);
-      elMV.setAttribute('scale', `${s} ${s} ${s}`);
+  // SCALE FIX
+  if (typeof d.scale === 'string') {
+    elMV.setAttribute('scale', d.scale);
+  } else {
+    const s = (d.scale ?? 1).toFixed(6);
+    elMV.setAttribute('scale', `${s} ${s} ${s}`);
+  }
 
-      if (isIOS && d.usdzPath) {
-        elMV.setAttribute('ios-src', d.usdzPath);
-      } else {
-        elMV.removeAttribute('ios-src');
-      }
+  // ROTATION FIX
+  if (d.rotation) {
+    elMV.setAttribute('orientation', d.rotation);
+  }
 
-      if (elMV.getAttribute('src') !== d.glbPath) {
-        elMV.setAttribute('src', d.glbPath);
-      } else {
-        onMVLoaded(d);
-      }
-    });
+  if (isIOS && d.usdzPath) {
+    elMV.setAttribute('ios-src', d.usdzPath);
+  } else {
+    elMV.removeAttribute('ios-src');
+  }
+
+  if (elMV.getAttribute('src') !== d.glbPath) {
+    elMV.setAttribute('src', d.glbPath);
+  } else {
+    onMVLoaded(d);
+  }
+});
 
     elArBtnWrap.style.display = 'flex';
     elArLaunch.onclick = () => {
