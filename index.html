@@ -24,28 +24,27 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --font-serif:  'Noto Serif JP', 'Georgia', serif;
-      --font-sans:   'Noto Sans JP', 'Hiragino Sans', 'Helvetica Neue', sans-serif;
-      --font-display:'Cinzel', 'Palatino Linotype', 'Big Caslon', serif;
-      --font-body:   'Cormorant Garamond', 'Palatino Linotype', Georgia, serif;
-
-      --washi:       #efe2cf;
-      --washi-dark:  #e2d1b8;
-      --washi-deep:  #d4bea0;
-      --ink:         #2c120f;
-      --ink-mid:     #4e231b;
-      --ink-light:   #7b5647;
-      --ink-faint:   #a07d69;
-      --crimson:     #8d1d2d;
-      --crimson-mid: #a32133;
-      --crimson-lt:  #c74456;
-      --gold:        #c39a5c;
-      --gold-lt:     #ddb777;
-      --gold-pale:   #f1d7a4;
-      --sage:        #567a47;
-      --sage-lt:     #dce9d0;
-      --shadow-ink:  rgba(44,18,15,0.14);
-      --shadow-deep: rgba(44,18,15,0.24);
+      --font-serif:   'Noto Serif JP', 'Georgia', serif;
+      --font-sans:    'Noto Sans JP', 'Hiragino Sans', 'Helvetica Neue', sans-serif;
+      --font-display: 'Cinzel', 'Palatino Linotype', 'Big Caslon', serif;
+      --font-body:    'Cormorant Garamond', 'Palatino Linotype', Georgia, serif;
+      --washi:        #efe2cf;
+      --washi-dark:   #e2d1b8;
+      --washi-deep:   #d4bea0;
+      --ink:          #2c120f;
+      --ink-mid:      #4e231b;
+      --ink-light:    #7b5647;
+      --ink-faint:    #a07d69;
+      --crimson:      #8d1d2d;
+      --crimson-mid:  #a32133;
+      --crimson-lt:   #c74456;
+      --gold:         #c39a5c;
+      --gold-lt:      #ddb777;
+      --gold-pale:    #f1d7a4;
+      --sage:         #567a47;
+      --sage-lt:      #dce9d0;
+      --shadow-ink:   rgba(44,18,15,0.14);
+      --shadow-deep:  rgba(44,18,15,0.24);
     }
 
     html { scroll-behavior: smooth; }
@@ -86,10 +85,6 @@
       width: 52px; height: 52px; border: 1.5px solid rgba(196,160,48,0.5);
       border-radius: 50%; display: flex; align-items: center; justify-content: center;
       margin: 0 auto 14px; position: relative; animation: monSpin 20s linear infinite;
-    }
-    .header-mon::before {
-      content: ''; font-size: 26px; color: var(--crimson-mid);
-      animation: monSpin 20s linear infinite reverse;
     }
     @keyframes monSpin { to { transform: rotate(360deg); } }
     .header-kanji {
@@ -167,7 +162,7 @@
     /* ── MAIN ── */
     .main { max-width: 740px; margin: 0 auto; padding: 1.5rem 1rem 5rem; }
 
-    /* ── SKELETON CARDS ── */
+    /* ── SKELETON ── */
     .skeleton-grid { display: flex; flex-direction: column; gap: 10px; }
     .skeleton-card {
       background: rgba(243,232,215,0.5); border-radius: 1px;
@@ -179,23 +174,14 @@
     .skeleton-card .sk-thumb { width: 68px; height: 68px; flex-shrink: 0; background: rgba(139,26,26,0.12); border-radius: 1px; }
     .skeleton-card .sk-body { flex: 1; display: flex; flex-direction: column; gap: 8px; justify-content: center; }
     .skeleton-card .sk-line { height: 12px; background: rgba(139,26,26,0.1); border-radius: 2px; }
-    .skeleton-card .sk-line.wide { width: 65%; }
-    .skeleton-card .sk-line.full { width: 100%; }
-    .skeleton-card .sk-line.mid  { width: 45%; }
+    .skeleton-card .sk-line.wide  { width: 65%; }
+    .skeleton-card .sk-line.full  { width: 100%; }
+    .skeleton-card .sk-line.mid   { width: 45%; }
     .skeleton-card .sk-line.short { width: 30%; }
-    @keyframes shimmer {
-      0%,100% { opacity: 0.7; }
-      50%      { opacity: 1; }
-    }
+    @keyframes shimmer { 0%,100%{opacity:0.7} 50%{opacity:1} }
 
     .state-box { text-align: center; padding: 4rem 1rem; color: var(--ink-faint); }
-    .state-box .spinner {
-      width: 36px; height: 36px; border: 2px solid rgba(139,26,26,0.15);
-      border-top-color: var(--crimson); border-radius: 50%;
-      animation: spin 0.9s linear infinite; margin: 0 auto 1rem; background: transparent;
-    }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .state-box p { font-size: 13px; font-family: var(--font-serif); letter-spacing: 2px; }
     .section-label {
       display: flex; align-items: center; gap: 14px; margin: 2rem 0 1rem;
       font-family: var(--font-serif); font-size: 11px; letter-spacing: 4px;
@@ -212,8 +198,7 @@
       cursor: pointer;
       transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s, background 0.2s;
       -webkit-tap-highlight-color: transparent; position: relative; overflow: hidden;
-      content-visibility: auto;
-      contain-intrinsic-size: auto 100px;
+      content-visibility: auto; contain-intrinsic-size: auto 100px;
     }
     .menu-card::before {
       content: ''; position: absolute; top: -10px; right: -10px; width: 80px; height: 80px;
@@ -232,10 +217,7 @@
       border: 1px solid rgba(139,26,26,0.15); display: flex; align-items: center; justify-content: center;
       font-size: 32px; position: relative; overflow: hidden;
     }
-    .card-thumb img {
-      width: 100%; height: 100%; object-fit: cover; display: block;
-      decoding: async;
-    }
+    .card-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; decoding: async; }
     .ar-pill {
       position: absolute; bottom: 2px; right: 2px; background: var(--crimson);
       color: var(--washi); font-size: 7px; letter-spacing: 1px; padding: 2px 5px;
@@ -261,9 +243,7 @@
       cursor: pointer; transition: background 0.18s, box-shadow 0.18s;
       -webkit-tap-highlight-color: transparent; min-height: 44px; border-radius: 1px; position: relative;
     }
-    .ar-btn::before {
-      content: ''; position: absolute; inset: 0; background: var(--crimson); opacity: 0; transition: opacity 0.18s;
-    }
+    .ar-btn::before { content: ''; position: absolute; inset: 0; background: var(--crimson); opacity: 0; transition: opacity 0.18s; }
     .ar-btn:hover::before { opacity: 1; }
     .ar-btn:hover { box-shadow: 0 4px 14px rgba(139,26,26,0.4); }
     .ar-btn > * { position: relative; z-index: 1; }
@@ -288,6 +268,8 @@
     }
     @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: none; opacity: 1; } }
     @keyframes fadeIn  { from { opacity: 0; transform: scale(0.96) translateY(8px); } to { opacity: 1; transform: none; } }
+
+    /* ── MODEL VIEWER WRAP ── */
     .modal-viewer-wrap {
       width: 100%; height: 300px;
       background: linear-gradient(160deg, #120c05 0%, #1e1208 50%, #120c05 100%);
@@ -299,15 +281,24 @@
       border: 1px solid rgba(196,160,48,0.18); pointer-events: none; z-index: 3;
     }
 
+    /*
+      FIX A — model-viewer is NO LONGER hidden with opacity:0 / pointer-events:none.
+      The mv-loader overlay sits on top (z-index:5) and blocks the view while loading.
+      Once the model is ready we hide the loader — the model-viewer beneath is already visible.
+      This eliminates the race condition where the 'load' event fired before mv-ready was set.
+    */
     model-viewer {
-      display: block; width: 100%; height: 300px; background: transparent;
-      --progress-bar-color: #b8860b; --progress-mask: transparent;
+      display: block;
+      width: 100%;
+      height: 300px;
+      background: transparent;
+      --progress-bar-color: transparent;
+      --progress-mask: transparent;
       touch-action: pan-y pinch-zoom;
-      position: absolute; inset: 0; z-index: 2;
-      opacity: 0; transition: opacity 0.35s ease;
-      pointer-events: none;
+      position: absolute;
+      inset: 0;
+      z-index: 2;
     }
-    model-viewer.mv-ready { opacity: 1; pointer-events: auto; }
 
     .mv-ar-badge {
       position: absolute; top: 10px; left: 50%;
@@ -335,11 +326,12 @@
     }
     .modal-close:hover { background: var(--crimson); border-color: var(--crimson); color: var(--washi); }
 
+    /* Loader sits ABOVE model-viewer (z-index:5 > z-index:2) and is removed when model loads */
     .mv-loader {
       position: absolute; inset: 0; z-index: 5;
       display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
       background: linear-gradient(160deg, #120c05 0%, #1e1208 50%, #120c05 100%);
-      transition: opacity 0.3s;
+      transition: opacity 0.35s ease;
     }
     .mv-loader.hidden { opacity: 0; pointer-events: none; }
     .mv-loader-ring {
@@ -347,13 +339,31 @@
       border: 2px solid rgba(196,160,48,0.15); border-top-color: var(--gold);
       animation: spin 0.8s linear infinite;
     }
-    .mv-loader-text { font-family: var(--font-display); font-size: 10px; letter-spacing: 3px; color: var(--gold-pale); opacity: 0.6; }
+    .mv-loader-text {
+      font-family: var(--font-display); font-size: 10px; letter-spacing: 3px;
+      color: var(--gold-pale); opacity: 0.6; transition: opacity 0.2s;
+    }
+
+    /* Photo fallback sits below model-viewer (z-index:1) */
+    #modal-photo {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden; z-index: 1;
+      transition: opacity 0.4s ease;
+    }
 
     .modal-body { padding: 1.5rem 1.6rem 2rem; }
     .modal-name { font-family: var(--font-display); font-size: 26px; font-weight: 600; letter-spacing: 0.05em; color: var(--ink); margin-bottom: 2px; }
-    .modal-jp { font-family: var(--font-serif); font-size: 14px; font-weight: 300; color: var(--ink-faint); letter-spacing: 3px; margin-bottom: 12px; }
-    .modal-desc { font-size: 13.5px; color: var(--ink-light); line-height: 1.75; padding: 12px 16px; border-left: 3px solid var(--crimson); background: rgba(139,26,26,0.04); margin-bottom: 18px; font-family: var(--font-sans); }
-    .modal-footer { display: flex; align-items: center; justify-content: space-between; padding-top: 14px; border-top: 1px solid rgba(139,26,26,0.15); }
+    .modal-jp   { font-family: var(--font-serif); font-size: 14px; font-weight: 300; color: var(--ink-faint); letter-spacing: 3px; margin-bottom: 12px; }
+    .modal-desc {
+      font-size: 13.5px; color: var(--ink-light); line-height: 1.75;
+      padding: 12px 16px; border-left: 3px solid var(--crimson);
+      background: rgba(139,26,26,0.04); margin-bottom: 18px; font-family: var(--font-sans);
+    }
+    .modal-footer {
+      display: flex; align-items: center; justify-content: space-between;
+      padding-top: 14px; border-top: 1px solid rgba(139,26,26,0.15);
+    }
     .modal-price { font-family: var(--font-body); font-size: 32px; font-weight: 600; color: var(--ink); }
 
     .mv-ar-btn-wrap {
@@ -366,8 +376,7 @@
       border: none; padding: 11px 24px;
       font-family: var(--font-display); font-size: 12px; font-weight: 600;
       letter-spacing: 2px; cursor: pointer; white-space: nowrap; min-height: 44px;
-      box-shadow: 0 4px 18px rgba(139,26,26,0.45);
-      transition: opacity 0.15s;
+      box-shadow: 0 4px 18px rgba(139,26,26,0.45); transition: opacity 0.15s;
     }
     .modal-ar-launch-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
@@ -393,6 +402,8 @@
     }
     .funzone-btn:hover { opacity: 0.85; }
   </style>
+
+  <!-- model-viewer loaded as module — ensureModelViewerLoaded() waits for it -->
   <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 </head>
 <body>
@@ -435,7 +446,7 @@
 
 <main class="main">
   <div id="items-container">
-    <div class="skeleton-grid" id="skeleton-ui" aria-hidden="true">
+    <div class="skeleton-grid" aria-hidden="true">
       <div class="skeleton-card"><div class="sk-row"><div class="sk-thumb"></div><div class="sk-body"><div class="sk-line wide"></div><div class="sk-line full"></div><div class="sk-line full"></div><div class="sk-line short"></div></div></div></div>
       <div class="skeleton-card"><div class="sk-row"><div class="sk-thumb"></div><div class="sk-body"><div class="sk-line mid"></div><div class="sk-line full"></div><div class="sk-line full"></div><div class="sk-line short"></div></div></div></div>
       <div class="skeleton-card"><div class="sk-row"><div class="sk-thumb"></div><div class="sk-body"><div class="sk-line wide"></div><div class="sk-line full"></div><div class="sk-line full"></div><div class="sk-line short"></div></div></div></div>
@@ -449,35 +460,50 @@
   <div class="modal-card">
     <div class="modal-viewer-wrap" id="modal-viewer-wrap">
       <div class="seigaiha-bg"></div>
+
+      <!-- Close button — highest z-index so always tappable -->
       <button class="modal-close" id="modal-close" aria-label="Close">✕</button>
 
+      <!--
+        FIX A: Loader sits ON TOP of model-viewer (z-index 5 vs 2).
+        model-viewer is always visible — we just cover it with the loader until ready.
+        No more opacity:0 / pointer-events:none fighting with model-viewer internals.
+      -->
       <div class="mv-loader" id="mv-loader">
         <div class="mv-loader-ring"></div>
-        <div class="mv-loader-text">LOADING MODEL</div>
+        <div class="mv-loader-text" id="mv-loader-text">LOADING MODEL</div>
       </div>
 
-      <model-viewer id="main-mv"
+      <!--
+        FIX B: reveal="interaction" — model-viewer won't try to auto-show the model
+        and fight with our loader overlay. Model appears when ready.
+        FIX C: ar-modes corrected order — scene-viewer first for Android.
+        No poster attribute here — set dynamically in JS only when needed.
+      -->
+      <model-viewer
+        id="main-mv"
         scale="1 1 1"
         auto-rotate
+        camera-controls
+        touch-action="pan-y"
         ar
         ar-modes="scene-viewer webxr quick-look"
         ar-placement="floor"
-        camera-controls
-        touch-action="pan-y"
         shadow-intensity="1"
         shadow-softness="0.8"
         environment-image="neutral"
         exposure="1"
-        camera-orbit="0deg 75deg 150%"
+        camera-orbit="0deg 75deg 105%"
         interaction-prompt="none"
-        loading="eager"
-        reveal="auto">
+        reveal="interaction"
+        loading="eager">
       </model-viewer>
 
-      <div id="modal-photo" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;z-index:1;transition:opacity 0.4s ease;"></div>
+      <!-- Photo/emoji fallback — z-index:1, sits behind model-viewer -->
+      <div id="modal-photo"></div>
 
       <div class="mv-ar-badge" id="mv-ar-badge">✦ AR Ready</div>
-      <div class="scale-info"  id="scale-info">Actual portion size</div>
+      <div class="scale-info"  id="scale-info"></div>
 
       <div class="mv-ar-btn-wrap" id="mv-ar-btn-wrap">
         <button class="modal-ar-launch-btn" id="modal-ar-launch-btn">✦ View On Table</button>
@@ -503,13 +529,23 @@
 </footer>
 
 <script>
-/* ─────────────────────────────────────────────
+/* ═══════════════════════════════════════════
    CONFIGURATION
-───────────────────────────────────────────── */
-const ASSETS_BASE = '/3d-model';  // FIX 4: root-relative path — prevents 404 on subdirectory pages
+   ─────────────────────────────────────────
+   ASSETS_BASE: path to your 3d-model folder.
+   Use a relative path (no leading slash) if
+   your site is served from a subdirectory,
+   e.g. "3d-model" instead of "/3d-model".
+═══════════════════════════════════════════ */
+const ASSETS_BASE = '3d-model';
 
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTEkmIGoRgD1rQNmDgmY3lvB7WBOg86iOHHrS0MJ6qQiReuDHsUyX3YV7KoWXxTbefyBUWPTHpvUOt3/pub?output=csv';
 
+/*
+  LOCAL_ASSETS — keys must exactly match the dish name after normalizeKey():
+  lowercase, spaces replaced with hyphens.
+  scale is a "x y z" string passed directly to model-viewer's scale attribute.
+*/
 const LOCAL_ASSETS = {
   'pistachio-sauce-bigne-with-ricotta': {
     folder: 'Pistachio-Sauce-Bigne-with-Ricotta',
@@ -541,26 +577,27 @@ const EMOJI_MAP = {
 };
 
 const I18N = {
-  en: { sub:'Authentic Italian Cuisine',    badge:'Interactive 3D & AR Preview', veg:'veg',         loading:'Loading...',           all:'All', starter:'Starters', main:'Main Course', dessert:'Desserts' },
-  it: { sub:'Autentica Cucina Italiana',    badge:'Anteprima Interattiva 3D & AR', veg:'vegetariano', loading:'Caricamento...',      all:'Tutti', starter:'Antipasti', main:'Portata Principale', dessert:'Dolci' },
-  kn: { sub:'ಅಧಿಕೃತ ಇಟಾಲಿಯನ್ ಆಹಾರ',        badge:'3D ಮತ್ತು AR ಮುನ್ನೋಟ',           veg:'ಸಸ್ಯಾಹಾರಿ',   loading:'ಲೋಡ್ ಆಗುತ್ತಿದೆ...', all:'ಎಲ್ಲಾ', starter:'ಸ್ಟಾರ್ಟರ್', main:'ಮುಖ್ಯ ಕೋರ್ಸ್', dessert:'ಡೆಸರ್ಟ್' },
-  ta: { sub:'உண்மையான இத்தாலிய உணவு',      badge:'3D மற்றும் AR மாதிரிக்காட்சி', veg:'சைவம்',        loading:'ஏற்றப்படுகிறது...', all:'அனைத்தும்', starter:'தொடக்க', main:'முதன்மை', dessert:'இனிப்பு' },
-  ml: { sub:'ആധികാരിക ഇറ്റാലിയൻ വിഭവങ്ങൾ',badge:'3D & AR പ്രിവ്യൂ',              veg:'വെജ്',         loading:'ലോഡ് ചെയ്യുന്നു...', all:'എല്ലാം', starter:'സ്റ്റാർട്ടർ', main:'മെയിൻ', dessert:'ഡെസേർട്ട്' },
-  te: { sub:'ప్రామాణిక ఇటాలియన్ వంటకాలు',  badge:'3D & AR ప్రివ్యూ',              veg:'శాఖాహారం',    loading:'లోడ్ అవుతోంది...',   all:'అన్నీ', starter:'స్టార్టర్', main:'మెయిన్', dessert:'డెజర్ట్' },
+  en: { sub:'Authentic Italian Cuisine',    badge:'Interactive 3D & AR Preview', veg:'veg',         all:'All', starter:'Starters', main:'Main Course', dessert:'Desserts' },
+  it: { sub:'Autentica Cucina Italiana',    badge:'Anteprima Interattiva 3D & AR', veg:'vegetariano', all:'Tutti', starter:'Antipasti', main:'Portata Principale', dessert:'Dolci' },
+  kn: { sub:'ಅಧಿಕೃತ ಇಟಾಲಿಯನ್ ಆಹಾರ',        badge:'3D ಮತ್ತು AR ಮುನ್ನೋಟ',           veg:'ಸಸ್ಯಾಹಾರಿ',   all:'ಎಲ್ಲಾ', starter:'ಸ್ಟಾರ್ಟರ್', main:'ಮುಖ್ಯ ಕೋರ್ಸ್', dessert:'ಡೆಸರ್ಟ್' },
+  ta: { sub:'உண்மையான இத்தாலிய உணவு',      badge:'3D மற்றும் AR மாதிரிக்காட்சி', veg:'சைவம்',        all:'அனைத்தும்', starter:'தொடக்க', main:'முதன்மை', dessert:'இனிப்பு' },
+  ml: { sub:'ആധികാരിക ഇറ്റാലിയൻ വിഭവങ്ങൾ',badge:'3D & AR പ്രിവ്യൂ',              veg:'വെജ്',         all:'എല്ലാം', starter:'സ്റ്റാർട്ടർ', main:'മെയിൻ', dessert:'ഡെസേർട്ട്' },
+  te: { sub:'ప్రామాణిక ఇటాలియన్ వంటకాలు',  badge:'3D & AR ప్రివ్యూ',              veg:'శాఖాహారం',    all:'అన్నీ', starter:'స్టార్టర్', main:'మెయిన్', dessert:'డెజర్ట్' },
 };
 
 const CAT_LABELS = {
-  all:          { en:'All',         it:'Tutti' },
-  starter:      { en:'Starters',    it:'Antipasti' },
-  dessert:      { en:'Desserts',    it:'Dolci' },
-  'main-course':{ en:'Main Course', it:'Portata Principale' },
+  all:           { en:'All',         it:'Tutti' },
+  starter:       { en:'Starters',    it:'Antipasti' },
+  dessert:       { en:'Desserts',    it:'Dolci' },
+  'main-course': { en:'Main Course', it:'Portata Principale' },
 };
 
-/* ─────────────────────────────────────────────
-   FIX 1: ensureModelViewerLoaded — was missing entirely
-   Waits for the <model-viewer> custom element to be
-   registered by the unpkg module before we try to use it.
-───────────────────────────────────────────── */
+/* ═══════════════════════════════════════════
+   FIX 1 — ensureModelViewerLoaded
+   Waits for <model-viewer> custom element to
+   register before we set src / activateAR.
+   Previously this function was MISSING entirely.
+═══════════════════════════════════════════ */
 function ensureModelViewerLoaded() {
   return new Promise((resolve) => {
     if (customElements.get('model-viewer')) {
@@ -571,9 +608,16 @@ function ensureModelViewerLoaded() {
   });
 }
 
-/* ─────────────────────────────────────────────
-   CSV FETCH — kicked off immediately
-───────────────────────────────────────────── */
+/* ═══════════════════════════════════════════
+   idleCallback helper
+═══════════════════════════════════════════ */
+const idleCallback = window.requestIdleCallback
+  ? (fn) => requestIdleCallback(fn, { timeout: 2000 })
+  : (fn) => setTimeout(fn, 200);
+
+/* ═══════════════════════════════════════════
+   CSV — fetched immediately on page load
+═══════════════════════════════════════════ */
 const CACHE_KEY = 'menu_csv_v1';
 const CACHE_TTL = 15 * 60 * 1000;
 
@@ -593,32 +637,24 @@ function setCachedCSV(text) {
 const csvPromise = (async () => {
   const cached = getCachedCSV();
   if (cached) return cached;
-  const res = await fetch(CSV_URL);
+  const res  = await fetch(CSV_URL);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const text = await res.text();
   setCachedCSV(text);
   return text;
 })();
 
-/* ─────────────────────────────────────────────
-   idleCallback helper
-───────────────────────────────────────────── */
-const idleCallback = window.requestIdleCallback
-  ? (fn) => requestIdleCallback(fn, { timeout: 2000 })
-  : (fn) => setTimeout(fn, 200);
-
-/* ─────────────────────────────────────────────
-   GLB PREFETCH CACHE
-───────────────────────────────────────────── */
+/* ═══════════════════════════════════════════
+   GLB PREFETCH
+═══════════════════════════════════════════ */
 const glbPrefetched = new Set();
+
 function prefetchGlb(glbPath) {
   if (!glbPath || glbPrefetched.has(glbPath)) return;
   glbPrefetched.add(glbPath);
   const link = document.createElement('link');
-  link.rel  = 'prefetch';
-  link.href = glbPath;
-  link.as   = 'fetch';
-  link.crossOrigin = 'anonymous';
+  link.rel = 'prefetch'; link.href = glbPath;
+  link.as  = 'fetch';    link.crossOrigin = 'anonymous';
   document.head.appendChild(link);
 }
 
@@ -635,9 +671,9 @@ function preloadAboveFold(dishes, count = 4) {
   });
 }
 
-/* ─────────────────────────────────────────────
+/* ═══════════════════════════════════════════
    HELPERS
-───────────────────────────────────────────── */
+═══════════════════════════════════════════ */
 function normalizeKey(str) {
   return (str || '').toLowerCase().replace(/\s+/g, '-').trim();
 }
@@ -651,7 +687,7 @@ function getLocalAssets(dishName) {
     posterPath: `${base}.png`,
     glbPath:    `${base}.glb`,
     usdzPath:   `${base}.usdz`,
-    scale:      entry.scale,   // FIX 2: always keep as string "x y z"
+    scale:      entry.scale,   // always a "x y z" string
   };
 }
 
@@ -674,12 +710,13 @@ function splitLine(line) {
     if (ch === ',' && !inQ) { result.push(cur); cur = ''; continue; }
     cur += ch;
   }
-  result.push(cur); return result;
+  result.push(cur);
+  return result;
 }
 
-/* ─────────────────────────────────────────────
+/* ═══════════════════════════════════════════
    STATE
-───────────────────────────────────────────── */
+═══════════════════════════════════════════ */
 let allDishes = [], rawRows = [], activeCategory = 'all', currentLang = 'en';
 
 const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
@@ -687,7 +724,7 @@ const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
 
 function rowToDish(row) {
   const truthy = v => ['true', 'yes', '1'].includes((v || '').toLowerCase());
-  const sfx = { it:'_it', kn:'_kn', ta:'_ta', ml:'_ml', te:'_te', hi:'_hi' }[currentLang] || '';
+  const sfx  = { it:'_it', kn:'_kn', ta:'_ta', ml:'_ml', te:'_te', hi:'_hi' }[currentLang] || '';
   const desc = row[`description${sfx}`] || row['description'] || '';
   const name = row[`name${sfx}`]        || row['name']        || '';
   const local = getLocalAssets(row['name']);
@@ -702,14 +739,14 @@ function rowToDish(row) {
     glbPath:    local.glbPath,
     usdzPath:   local.usdzPath,
     posterPath: local.posterPath,
-    scale:      local.scale,      // FIX 2: stored as "x y z" string
+    scale:      local.scale,
     emoji:      EMOJI_MAP[normalizeKey(row['name'])] || '🍽️',
   };
 }
 
-/* ─────────────────────────────────────────────
+/* ═══════════════════════════════════════════
    RENDER
-───────────────────────────────────────────── */
+═══════════════════════════════════════════ */
 function tagHTML(d) {
   const t = I18N[currentLang] || I18N.en;
   return [
@@ -769,7 +806,9 @@ function cardHTML(d, isAboveFold) {
 }
 
 function renderItems() {
-  const filtered  = activeCategory === 'all' ? allDishes : allDishes.filter(d => d.category === activeCategory);
+  const filtered  = activeCategory === 'all'
+    ? allDishes
+    : allDishes.filter(d => d.category === activeCategory);
   const container = document.getElementById('items-container');
 
   let html = '';
@@ -794,8 +833,8 @@ function renderItems() {
       const doPrefetch = () => prefetchGlb(d.glbPath);
       card.addEventListener('mouseenter', doPrefetch, { once: true, passive: true });
       card.addEventListener('touchstart',  doPrefetch, { once: true, passive: true });
-      card.addEventListener('click',   () => openModal(card.dataset.id));
-      card.addEventListener('keydown', e  => { if (e.key === 'Enter' || e.key === ' ') openModal(card.dataset.id); });
+      card.addEventListener('click',   ()  => openModal(card.dataset.id));
+      card.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') openModal(card.dataset.id); });
     });
     container.querySelectorAll('.ar-btn').forEach(btn =>
       btn.addEventListener('click', e => { e.stopPropagation(); openModal(btn.dataset.id); })
@@ -803,24 +842,34 @@ function renderItems() {
   });
 }
 
-/* ─────────────────────────────────────────────
-   MODAL
-───────────────────────────────────────────── */
-const elMV        = document.getElementById('main-mv');
-const elMvLoader  = document.getElementById('mv-loader');
-const elPhoto     = document.getElementById('modal-photo');
-const elArBadge   = document.getElementById('mv-ar-badge');
-const elScaleInfo = document.getElementById('scale-info');
-const elArBtnWrap = document.getElementById('mv-ar-btn-wrap');
-const elArLaunch  = document.getElementById('modal-ar-launch-btn');
+/* ═══════════════════════════════════════════
+   MODAL — DOM refs
+═══════════════════════════════════════════ */
+const elMV         = document.getElementById('main-mv');
+const elMvLoader   = document.getElementById('mv-loader');
+const elMvLoaderTx = document.getElementById('mv-loader-text');
+const elPhoto      = document.getElementById('modal-photo');
+const elArBadge    = document.getElementById('mv-ar-badge');
+const elScaleInfo  = document.getElementById('scale-info');
+const elArBtnWrap  = document.getElementById('mv-ar-btn-wrap');
+const elArLaunch   = document.getElementById('modal-ar-launch-btn');
 
-let currentDish = null;
+let currentDish   = null;
+let loadTimeout   = null;   // safety timeout in case 'load' never fires
 
-function showLoader() { elMvLoader.classList.remove('hidden'); }
-function hideLoader() { elMvLoader.classList.add('hidden'); }
+/* ── loader helpers ── */
+function showLoader(msg) {
+  elMvLoaderTx.textContent = msg || 'LOADING MODEL';
+  elMvLoader.classList.remove('hidden');
+}
+function hideLoader() {
+  elMvLoader.classList.add('hidden');
+}
 
+/* ── photo/emoji fallback ── */
 function setPhoto(d) {
   elPhoto.style.opacity = '1';
+  elPhoto.style.display = 'flex';
   if (d.posterPath) {
     elPhoto.innerHTML = `
       <img src="${d.posterPath}" alt="${d.name}"
@@ -828,16 +877,43 @@ function setPhoto(d) {
            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
       <span style="display:none;font-size:80px;align-items:center;justify-content:center;width:100%;height:100%;">${d.emoji}</span>`;
   } else {
-    elPhoto.innerHTML = `<span style="font-size:80px;">${d.emoji}</span>`;
+    elPhoto.innerHTML = `<span style="font-size:80px;display:flex;align-items:center;justify-content:center;width:100%;height:100%;">${d.emoji}</span>`;
   }
-  elPhoto.style.display = 'flex';
 }
 
+/* ── called when model finishes loading ── */
+function onMVLoaded(d) {
+  if (!currentDish || currentDish.id !== d.id) return;
+  clearTimeout(loadTimeout);
+
+  console.log('[AR] model loaded:', d.glbPath);
+
+  /*
+    FIX D — Remove the poster attribute once the 3D model has loaded.
+    If poster stays set, model-viewer keeps showing the image instead of the 3D scene.
+  */
+  elMV.removeAttribute('poster');
+
+  hideLoader();
+  elArBadge.classList.add('visible');
+  elScaleInfo.textContent = 'Actual portion size';
+
+  /* Fade the photo out — model-viewer is already visible beneath it */
+  elPhoto.style.opacity = '0';
+  setTimeout(() => {
+    if (currentDish?.id === d.id) elPhoto.style.display = 'none';
+  }, 420);
+}
+
+/* ═══════════════════════════════════════════
+   openModal
+═══════════════════════════════════════════ */
 function openModal(id) {
   const d = allDishes.find(x => x.id === id);
   if (!d) return;
   currentDish = d;
 
+  /* Populate text fields */
   document.getElementById('modal-name').textContent = d.name;
   document.getElementById('modal-jp').textContent   = d.jp || '';
   document.getElementById('modal-desc').textContent = d.desc;
@@ -846,72 +922,107 @@ function openModal(id) {
   document.getElementById('modal-tags').innerHTML   = tagHTML(d);
   document.getElementById('modal-tags2').innerHTML  = tagHTML(d);
 
-  elMV.setAttribute('camera-orbit', '0deg 75deg 105%');
-  elMV.classList.remove('mv-ready');
+  /* Reset viewer state */
   elArBadge.classList.remove('visible');
   elScaleInfo.textContent = '';
   elArBtnWrap.style.display = 'none';
   elArLaunch.disabled = false;
   elArLaunch.textContent = '✦ View On Table';
+  clearTimeout(loadTimeout);
 
+  /* Show photo while model loads */
   setPhoto(d);
-  showLoader();
+  showLoader('LOADING MODEL');
 
   if (d.glbPath) {
     prefetchGlb(d.glbPath);
 
-    // FIX 1: ensureModelViewerLoaded now exists — waits for custom element registration
+    /*
+      FIX 1 — ensureModelViewerLoaded() exists now.
+      Wait for the custom element to register, then configure and load.
+    */
     ensureModelViewerLoaded().then(() => {
-      if (currentDish?.id !== d.id) return;
+      if (!currentDish || currentDish.id !== d.id) return;
 
-      // FIX 2: scale is always a clean "x y z" string — set directly, no toFixed conversion
+      console.log('[AR] setting src:', d.glbPath, '| scale:', d.scale);
+
+      /* Reset camera */
+      elMV.setAttribute('camera-orbit', '0deg 75deg 105%');
+
+      /* FIX 2 — scale is always a "x y z" string, set directly */
       elMV.setAttribute('scale', d.scale || '1 1 1');
 
+      /* Orientation */
       if (d.rotation) {
         elMV.setAttribute('orientation', d.rotation);
       } else {
         elMV.removeAttribute('orientation');
       }
 
-      // Set poster so model-viewer shows something instantly while GLB streams
-      elMV.setAttribute('poster', d.posterPath || '');
-
-      // iOS: set USDZ source for Quick Look
+      /* iOS USDZ for Quick Look */
       if (isIOS && d.usdzPath) {
         elMV.setAttribute('ios-src', d.usdzPath);
       } else {
         elMV.removeAttribute('ios-src');
       }
 
+      /*
+        FIX C — Set poster BEFORE setting src, so model-viewer shows an image
+        instantly while the GLB downloads, instead of a blank dark frame.
+        We remove it again in onMVLoaded() so the 3D model can actually appear.
+      */
+      if (d.posterPath) {
+        elMV.setAttribute('poster', d.posterPath);
+      } else {
+        elMV.removeAttribute('poster');
+      }
+
+      /*
+        Only set src if it changed — setting same src re-triggers download.
+        If src is already correct, fire onMVLoaded manually since 'load' won't re-fire.
+      */
       if (elMV.getAttribute('src') !== d.glbPath) {
         elMV.setAttribute('src', d.glbPath);
       } else {
+        /* src unchanged: model may already be loaded, call handler directly */
         onMVLoaded(d);
       }
+
+      /*
+        Safety timeout: if 'load' never fires (e.g. GLB 404, CORS, format error)
+        hide the loader after 12s so the user at least sees the photo fallback.
+      */
+      loadTimeout = setTimeout(() => {
+        console.warn('[AR] load timeout — GLB may be missing or blocked:', d.glbPath);
+        showLoader('TAP TO RETRY');
+        elMvLoader.style.cursor = 'pointer';
+        elMvLoader.onclick = () => {
+          elMvLoader.style.cursor = '';
+          elMvLoader.onclick = null;
+          showLoader('LOADING MODEL');
+          elMV.setAttribute('src', '');
+          setTimeout(() => {
+            if (currentDish?.id === d.id) elMV.setAttribute('src', d.glbPath);
+          }, 100);
+        };
+      }, 12000);
     });
 
+    /* Show AR button */
     elArBtnWrap.style.display = 'flex';
-
     elArLaunch.onclick = () => {
       elArLaunch.disabled = true;
       elArLaunch.innerHTML = `<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(245,237,224,0.3);border-top-color:var(--washi);border-radius:50%;animation:spin 0.8s linear infinite;"></span> Loading…`;
-
       ensureModelViewerLoaded().then(() => {
-        if (elMV.classList.contains('mv-ready')) {
-          elMV.activateAR();
-          elArLaunch.disabled = false;
-          elArLaunch.textContent = '✦ Launch AR';
-        } else {
-          elMV.addEventListener('load', () => {
-            elMV.activateAR();
-            elArLaunch.disabled = false;
-            elArLaunch.textContent = '✶ View in AR';
-          }, { once: true });
-        }
+        /* activateAR() works whether or not the model is fully loaded */
+        elMV.activateAR();
+        elArLaunch.disabled = false;
+        elArLaunch.textContent = '✦ Launch AR';
       });
     };
 
   } else {
+    /* No 3D model for this dish — just show photo */
     hideLoader();
   }
 
@@ -919,45 +1030,61 @@ function openModal(id) {
   document.body.style.overflow = 'hidden';
 }
 
-function onMVLoaded(d) {
-  if (currentDish?.id !== d.id) return;
-  hideLoader();
-  elMV.classList.add('mv-ready');
-  elArBadge.classList.add('visible');
-  elScaleInfo.textContent = 'Actual portion size';
-  setTimeout(() => {
-    if (currentDish?.id === d.id) {
-      elPhoto.style.opacity = '0';
-      setTimeout(() => { elPhoto.style.display = 'none'; }, 50);
-    }
-  }, 380);
-}
+/* ═══════════════════════════════════════════
+   model-viewer global event listeners
+   Attached once, outside openModal, so they
+   are never duplicated across dish opens.
+═══════════════════════════════════════════ */
 
-elMV.addEventListener('load',  () => { if (currentDish) onMVLoaded(currentDish); });
-elMV.addEventListener('error', () => {
+/* FIX B — 'load' fires when GLB is fully loaded and scene is ready */
+elMV.addEventListener('load', () => {
+  console.log('[AR] model-viewer load event fired');
+  if (currentDish) onMVLoaded(currentDish);
+});
+
+/* FIX F — 'progress' gives real loading percentage */
+elMV.addEventListener('progress', (e) => {
+  const pct = Math.round((e.detail.totalProgress || 0) * 100);
+  if (pct > 0 && pct < 100) {
+    elMvLoaderTx.textContent = `LOADING  ${pct}%`;
+  }
+});
+
+elMV.addEventListener('error', (e) => {
+  console.error('[AR] model-viewer error:', e);
+  clearTimeout(loadTimeout);
   hideLoader();
   elArLaunch.disabled = false;
-  elArLaunch.textContent = '⚠ Retry';
+  elArLaunch.textContent = '⚠ Could not load 3D';
 });
-elMV.addEventListener('ar-status', e => {
+
+elMV.addEventListener('ar-status', (e) => {
+  console.log('[AR] ar-status:', e.detail.status);
   if (e.detail.status === 'failed' || e.detail.status === 'not-presenting') {
     elArLaunch.disabled = false;
     elArLaunch.textContent = '✶ View in AR';
   }
 });
 
+/* Pause auto-rotate when tab is hidden */
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    if (typeof elMV.pause === 'function') elMV.pause();
+  } else {
+    if (typeof elMV.play  === 'function') elMV.play();
+  }
+});
+
+/* ═══════════════════════════════════════════
+   closeModal
+═══════════════════════════════════════════ */
 function closeModal() {
   document.getElementById('modal-overlay').classList.remove('open');
   document.body.style.overflow = '';
   currentDish = null;
+  clearTimeout(loadTimeout);
   if (typeof elMV.pause === 'function') elMV.pause();
 }
-
-document.addEventListener('visibilitychange', () => {
-  document.hidden
-    ? (typeof elMV.pause === 'function' && elMV.pause())
-    : (typeof elMV.play  === 'function' && elMV.play());
-});
 
 document.getElementById('modal-close').addEventListener('click', closeModal);
 document.getElementById('modal-overlay').addEventListener('click', e => {
@@ -965,6 +1092,9 @@ document.getElementById('modal-overlay').addEventListener('click', e => {
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
+/* ═══════════════════════════════════════════
+   Language switcher
+═══════════════════════════════════════════ */
 document.getElementById('lang-select').addEventListener('change', e => {
   currentLang = e.target.value;
   const t = I18N[currentLang] || I18N.en;
@@ -974,23 +1104,23 @@ document.getElementById('lang-select').addEventListener('change', e => {
   renderTabs(); renderItems();
 });
 
-/* ─────────────────────────────────────────────
+/* ═══════════════════════════════════════════
    INIT
-───────────────────────────────────────────── */
+═══════════════════════════════════════════ */
 async function init() {
   const container = document.getElementById('items-container');
   try {
     const text = await csvPromise;
-    rawRows    = parseCSV(text);
-    allDishes  = rawRows.map(rowToDish).filter(d => d.name);
-    if (!allDishes.length) throw new Error('No dishes found.');
+    rawRows   = parseCSV(text);
+    allDishes = rawRows.map(rowToDish).filter(d => d.name);
+    if (!allDishes.length) throw new Error('No dishes found in sheet.');
 
     preloadAboveFold(allDishes);
     renderTabs();
     renderItems();
 
   } catch (err) {
-    console.error('Menu load error:', err);
+    console.error('[Menu] load error:', err);
     container.innerHTML = `
       <div class="state-box">
         <p style="color:var(--crimson);font-family:var(--font-display);letter-spacing:2px;margin-bottom:10px">
@@ -998,22 +1128,20 @@ async function init() {
         </p>
         <p style="font-size:13px;line-height:1.8;color:var(--ink-light)">
           Make sure your sheet is published:<br>
-          <strong>File → Share → Publish to web → CSV</strong><br><br>
-          Google Sheet Connected Successfully
+          <strong>File → Share → Publish to web → CSV</strong>
         </p>
       </div>`;
   }
 }
 
-document.addEventListener('contextmenu', e => { e.preventDefault(); });
+/* Disable right-click and devtools shortcuts */
+document.addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('keydown', e => {
   if (
     e.key === 'F12' ||
-    (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
+    (e.ctrlKey && e.shiftKey && ['I','J','C'].includes(e.key)) ||
     (e.ctrlKey && e.key === 'u')
-  ) {
-    e.preventDefault();
-  }
+  ) { e.preventDefault(); }
 });
 
 init();
