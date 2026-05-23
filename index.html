@@ -281,12 +281,7 @@
       border: 1px solid rgba(196,160,48,0.18); pointer-events: none; z-index: 3;
     }
 
-    /*
-      FIX A — model-viewer is NO LONGER hidden with opacity:0 / pointer-events:none.
-      The mv-loader overlay sits on top (z-index:5) and blocks the view while loading.
-      Once the model is ready we hide the loader — the model-viewer beneath is already visible.
-      This eliminates the race condition where the 'load' event fired before mv-ready was set.
-    */
+    /* model-viewer always visible; loader overlay sits on top until ready */
     model-viewer {
       display: block;
       width: 100%;
@@ -326,7 +321,7 @@
     }
     .modal-close:hover { background: var(--crimson); border-color: var(--crimson); color: var(--washi); }
 
-    /* Loader sits ABOVE model-viewer (z-index:5 > z-index:2) and is removed when model loads */
+    /* Loader sits ABOVE model-viewer (z-index:5) — hidden once model loads */
     .mv-loader {
       position: absolute; inset: 0; z-index: 5;
       display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
@@ -403,7 +398,6 @@
     .funzone-btn:hover { opacity: 0.85; }
   </style>
 
-  <!-- model-viewer loaded as module — ensureModelViewerLoaded() waits for it -->
   <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 </head>
 <body>
@@ -461,24 +455,18 @@
     <div class="modal-viewer-wrap" id="modal-viewer-wrap">
       <div class="seigaiha-bg"></div>
 
-      <!-- Close button — highest z-index so always tappable -->
       <button class="modal-close" id="modal-close" aria-label="Close">✕</button>
 
-      <!--
-        FIX A: Loader sits ON TOP of model-viewer (z-index 5 vs 2).
-        model-viewer is always visible — we just cover it with the loader until ready.
-        No more opacity:0 / pointer-events:none fighting with model-viewer internals.
-      -->
       <div class="mv-loader" id="mv-loader">
         <div class="mv-loader-ring"></div>
         <div class="mv-loader-text" id="mv-loader-text">LOADING MODEL</div>
       </div>
 
       <!--
-        FIX B: reveal="interaction" — model-viewer won't try to auto-show the model
-        and fight with our loader overlay. Model appears when ready.
-        FIX C: ar-modes corrected order — scene-viewer first for Android.
-        No poster attribute here — set dynamically in JS only when needed.
+        FIX 1: Removed reveal="interaction" — it prevented activateAR() from working
+                because the model never reached a fully-activated internal state.
+        FIX 2: ar-modes has scene-viewer first (best Android support), then webxr, then quick-look (iOS).
+        NOTE:  No poster attribute here — set dynamically in JS only, removed once model loads.
       -->
       <model-viewer
         id="main-mv"
@@ -495,11 +483,9 @@
         exposure="1"
         camera-orbit="0deg 75deg 105%"
         interaction-prompt="none"
-        reveal="interaction"
         loading="eager">
       </model-viewer>
 
-      <!-- Photo/emoji fallback — z-index:1, sits behind model-viewer -->
       <div id="modal-photo"></div>
 
       <div class="mv-ar-badge" id="mv-ar-badge">✦ AR Ready</div>
@@ -531,21 +517,11 @@
 <script>
 /* ═══════════════════════════════════════════
    CONFIGURATION
-   ─────────────────────────────────────────
-   ASSETS_BASE: path to your 3d-model folder.
-   Use a relative path (no leading slash) if
-   your site is served from a subdirectory,
-   e.g. "3d-model" instead of "/3d-model".
 ═══════════════════════════════════════════ */
 const ASSETS_BASE = '3d-model';
 
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTEkmIGoRgD1rQNmDgmY3lvB7WBOg86iOHHrS0MJ6qQiReuDHsUyX3YV7KoWXxTbefyBUWPTHpvUOt3/pub?output=csv';
 
-/*
-  LOCAL_ASSETS — keys must exactly match the dish name after normalizeKey():
-  lowercase, spaces replaced with hyphens.
-  scale is a "x y z" string passed directly to model-viewer's scale attribute.
-*/
 const LOCAL_ASSETS = {
   'pistachio-sauce-bigne-with-ricotta': {
     folder: 'Pistachio-Sauce-Bigne-with-Ricotta',
@@ -593,10 +569,9 @@ const CAT_LABELS = {
 };
 
 /* ═══════════════════════════════════════════
-   FIX 1 — ensureModelViewerLoaded
+   ensureModelViewerLoaded
    Waits for <model-viewer> custom element to
    register before we set src / activateAR.
-   Previously this function was MISSING entirely.
 ═══════════════════════════════════════════ */
 function ensureModelViewerLoaded() {
   return new Promise((resolve) => {
@@ -687,7 +662,7 @@ function getLocalAssets(dishName) {
     posterPath: `${base}.png`,
     glbPath:    `${base}.glb`,
     usdzPath:   `${base}.usdz`,
-    scale:      entry.scale,   // always a "x y z" string
+    scale:      entry.scale,
   };
 }
 
@@ -854,8 +829,16 @@ const elScaleInfo  = document.getElementById('scale-info');
 const elArBtnWrap  = document.getElementById('mv-ar-btn-wrap');
 const elArLaunch   = document.getElementById('modal-ar-launch-btn');
 
-let currentDish   = null;
-let loadTimeout   = null;   // safety timeout in case 'load' never fires
+let currentDish = null;
+let loadTimeout = null;
+
+/*
+  FIX 3 — mvReady flag
+  Tracks whether the current GLB is fully loaded and the model-viewer
+  scene is ready. activateAR() only works reliably after this is true.
+  Reset to false every time a new dish is opened.
+*/
+let mvReady = false;
 
 /* ── loader helpers ── */
 function showLoader(msg) {
@@ -881,24 +864,28 @@ function setPhoto(d) {
   }
 }
 
-/* ── called when model finishes loading ── */
+/*
+  FIX 4 — onMVLoaded
+  Sets mvReady = true so the AR button can call activateAR() safely.
+  Always removes the poster attribute so the 3D scene is visible.
+  Fades out the photo fallback.
+*/
 function onMVLoaded(d) {
   if (!currentDish || currentDish.id !== d.id) return;
   clearTimeout(loadTimeout);
 
   console.log('[AR] model loaded:', d.glbPath);
 
-  /*
-    FIX D — Remove the poster attribute once the 3D model has loaded.
-    If poster stays set, model-viewer keeps showing the image instead of the 3D scene.
-  */
+  mvReady = true;
+
+  /* Always remove poster so the 3D scene can render */
   elMV.removeAttribute('poster');
 
   hideLoader();
   elArBadge.classList.add('visible');
   elScaleInfo.textContent = 'Actual portion size';
 
-  /* Fade the photo out — model-viewer is already visible beneath it */
+  /* Fade the photo out — model-viewer is already visible beneath */
   elPhoto.style.opacity = '0';
   setTimeout(() => {
     if (currentDish?.id === d.id) elPhoto.style.display = 'none';
@@ -912,6 +899,9 @@ function openModal(id) {
   const d = allDishes.find(x => x.id === id);
   if (!d) return;
   currentDish = d;
+
+  /* FIX 3 — reset ready flag whenever a new dish opens */
+  mvReady = false;
 
   /* Populate text fields */
   document.getElementById('modal-name').textContent = d.name;
@@ -937,10 +927,6 @@ function openModal(id) {
   if (d.glbPath) {
     prefetchGlb(d.glbPath);
 
-    /*
-      FIX 1 — ensureModelViewerLoaded() exists now.
-      Wait for the custom element to register, then configure and load.
-    */
     ensureModelViewerLoaded().then(() => {
       if (!currentDish || currentDish.id !== d.id) return;
 
@@ -949,7 +935,7 @@ function openModal(id) {
       /* Reset camera */
       elMV.setAttribute('camera-orbit', '0deg 75deg 105%');
 
-      /* FIX 2 — scale is always a "x y z" string, set directly */
+      /* Scale is always a "x y z" string */
       elMV.setAttribute('scale', d.scale || '1 1 1');
 
       /* Orientation */
@@ -967,9 +953,8 @@ function openModal(id) {
       }
 
       /*
-        FIX C — Set poster BEFORE setting src, so model-viewer shows an image
-        instantly while the GLB downloads, instead of a blank dark frame.
-        We remove it again in onMVLoaded() so the 3D model can actually appear.
+        Set poster BEFORE src so there's an image while the GLB downloads.
+        onMVLoaded() will always remove it once the 3D scene is ready.
       */
       if (d.posterPath) {
         elMV.setAttribute('poster', d.posterPath);
@@ -978,21 +963,22 @@ function openModal(id) {
       }
 
       /*
-        Only set src if it changed — setting same src re-triggers download.
-        If src is already correct, fire onMVLoaded manually since 'load' won't re-fire.
+        Only set src if it changed.
+        If src is already the same GLB, the 'load' event won't re-fire —
+        call onMVLoaded directly (model is already in memory).
       */
       if (elMV.getAttribute('src') !== d.glbPath) {
         elMV.setAttribute('src', d.glbPath);
       } else {
-        /* src unchanged: model may already be loaded, call handler directly */
         onMVLoaded(d);
       }
 
       /*
-        Safety timeout: if 'load' never fires (e.g. GLB 404, CORS, format error)
-        hide the loader after 12s so the user at least sees the photo fallback.
+        Safety timeout: if 'load' never fires (404, CORS, bad format)
+        hide spinner after 12s and offer a retry.
       */
       loadTimeout = setTimeout(() => {
+        if (mvReady) return; /* already loaded — do nothing */
         console.warn('[AR] load timeout — GLB may be missing or blocked:', d.glbPath);
         showLoader('TAP TO RETRY');
         elMvLoader.style.cursor = 'pointer';
@@ -1010,15 +996,46 @@ function openModal(id) {
 
     /* Show AR button */
     elArBtnWrap.style.display = 'flex';
+
+    /*
+      FIX 5 — AR button handler
+      Waits for mvReady before calling activateAR().
+      Without this guard, tapping "View On Table" while the GLB is still
+      downloading silently fails on both Android (Scene Viewer) and iOS (Quick Look).
+    */
     elArLaunch.onclick = () => {
-      elArLaunch.disabled = true;
-      elArLaunch.innerHTML = `<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(245,237,224,0.3);border-top-color:var(--washi);border-radius:50%;animation:spin 0.8s linear infinite;"></span> Loading…`;
-      ensureModelViewerLoaded().then(() => {
-        /* activateAR() works whether or not the model is fully loaded */
+      if (mvReady) {
+        /* Model is loaded — launch AR immediately */
         elMV.activateAR();
-        elArLaunch.disabled = false;
-        elArLaunch.textContent = '✦ Launch AR';
-      });
+        return;
+      }
+
+      /* Model still loading — show spinner and poll until ready */
+      elArLaunch.disabled = true;
+      elArLaunch.innerHTML =
+        `<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(245,237,224,0.3);border-top-color:var(--washi);border-radius:50%;animation:spin 0.8s linear infinite;vertical-align:middle;margin-right:6px;"></span> Loading…`;
+
+      const waitInterval = setInterval(() => {
+        if (!currentDish || currentDish.id !== d.id) {
+          clearInterval(waitInterval);
+          return;
+        }
+        if (mvReady) {
+          clearInterval(waitInterval);
+          elArLaunch.disabled = false;
+          elArLaunch.textContent = '✦ View On Table';
+          elMV.activateAR();
+        }
+      }, 200);
+
+      /* Give up after 15 s */
+      setTimeout(() => {
+        clearInterval(waitInterval);
+        if (!mvReady) {
+          elArLaunch.disabled = false;
+          elArLaunch.textContent = '⚠ Could not load 3D';
+        }
+      }, 15000);
     };
 
   } else {
@@ -1032,17 +1049,16 @@ function openModal(id) {
 
 /* ═══════════════════════════════════════════
    model-viewer global event listeners
-   Attached once, outside openModal, so they
-   are never duplicated across dish opens.
+   Attached once — never duplicated.
 ═══════════════════════════════════════════ */
 
-/* FIX B — 'load' fires when GLB is fully loaded and scene is ready */
+/* 'load' fires when the GLB is fully parsed and the scene is ready */
 elMV.addEventListener('load', () => {
   console.log('[AR] model-viewer load event fired');
   if (currentDish) onMVLoaded(currentDish);
 });
 
-/* FIX F — 'progress' gives real loading percentage */
+/* 'progress' gives real loading percentage */
 elMV.addEventListener('progress', (e) => {
   const pct = Math.round((e.detail.totalProgress || 0) * 100);
   if (pct > 0 && pct < 100) {
@@ -1053,6 +1069,7 @@ elMV.addEventListener('progress', (e) => {
 elMV.addEventListener('error', (e) => {
   console.error('[AR] model-viewer error:', e);
   clearTimeout(loadTimeout);
+  mvReady = false;
   hideLoader();
   elArLaunch.disabled = false;
   elArLaunch.textContent = '⚠ Could not load 3D';
@@ -1082,6 +1099,7 @@ function closeModal() {
   document.getElementById('modal-overlay').classList.remove('open');
   document.body.style.overflow = '';
   currentDish = null;
+  mvReady = false;
   clearTimeout(loadTimeout);
   if (typeof elMV.pause === 'function') elMV.pause();
 }
