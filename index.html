@@ -465,7 +465,6 @@
   ar
   ar-modes="webxr scene-viewer quick-look"
   ar-placement="floor"
-  ar-scale="fixed"
   camera-controls
   touch-action="pan-y"
   shadow-intensity="1"
@@ -851,12 +850,12 @@ function openModal(id) {
     ensureModelViewerLoaded().then(() => {
   if (currentDish?.id !== d.id) return;
 
-  // SCALE FIX
+// SCALE FIX
 if (typeof d.scale === 'string') {
-  elMV.scale = d.scale;
+  elMV.setAttribute('scale', d.scale);
 } else {
   const s = (d.scale ?? 1).toFixed(6);
-  elMV.scale = `${s} ${s} ${s}`;
+  elMV.setAttribute('scale', `${s} ${s} ${s}`);
 }
 
   // ROTATION FIX
