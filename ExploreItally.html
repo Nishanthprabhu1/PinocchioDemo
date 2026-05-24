@@ -322,39 +322,7 @@ model-viewer > [slot="ar-button"]{ display:none !important }
   border-radius:30px;
 }
 
-/* AR launch button — full-width at bottom of viewer */
-.ar-launch-wrap{
-  position:absolute;
-  bottom:14px;
-  left:50%;
-  transform:translateX(-50%);
-  z-index:9;
-  display:none;
-}
-.ar-launch-btn{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  background:linear-gradient(135deg,var(--gold),var(--gold2));
-  color:#000;
-  border:none;
-  padding:11px 28px;
-  font-family:var(--ff-ui);
-  font-size:11px;
-  font-weight:600;
-  letter-spacing:.12em;
-  text-transform:uppercase;
-  cursor:pointer;
-  border-radius:30px;
-  white-space:nowrap;
-  min-height:44px;
-  box-shadow:0 4px 18px rgba(184,151,58,.45);
-  transition:opacity .15s;
-}
-.ar-launch-btn:disabled{
-  opacity:.55;
-  cursor:not-allowed;
-}
+
 
 /* ── INFO PANEL ── */
 .landmark-info{
@@ -611,7 +579,13 @@ landmarks.forEach((l, i) => {
     <div class="pinch-hint">⟺ Pinch Zoom · Drag Rotate · Place in AR</div>
 
     <!-- AR not supported notice -->
-    <div class="ar-not-supported" id="arnosup-${i}">AR not supported on this device</div>
+<div class="ar-not-supported" id="arnosup-${i}">
+  AR not supported on this device
+</div>
+
+
+<div class="landmark-info">
+    
 
    
 
@@ -675,14 +649,26 @@ function wireCard(i) {
   const erroverlay= document.getElementById(`erroverlay-${i}`);
   const errmsg    = document.getElementById(`errmsg-${i}`);
   const retrybtn  = document.getElementById(`retry-${i}`);
-  const arlaunch  = document.getElementById(`arlaunch-${i}`);
-  const arwrap    = document.getElementById(`arwrap-${i}`);
   const arnosup   = document.getElementById(`arnosup-${i}`);
   const arbtn     = document.getElementById(`arbtn-${i}`);
   const v3dbtn    = document.getElementById(`v3dbtn-${i}`);
 
-  Object.assign(s, { mv, mvwrap, mvloader, bar, lbl, badge, photo, wrap,
-                     erroverlay, errmsg, retrybtn, arlaunch, arwrap, arnosup, arbtn, v3dbtn });
+  Object.assign(s, {
+  mv,
+  mvwrap,
+  mvloader,
+  bar,
+  lbl,
+  badge,
+  photo,
+  wrap,
+  erroverlay,
+  errmsg,
+  retrybtn,
+  arnosup,
+  arbtn,
+  v3dbtn
+});
 
   // Apply correct scale BEFORE src is ever assigned — prevents wrong-size flash
   applyScale(mv, s.scale, s.orbit);
@@ -700,13 +686,13 @@ function wireCard(i) {
 
     // Safety-net: confirm scale is correct, THEN reveal
     applyScale(mv, s.scale, s.orbit);
-    mv.dismissPoster(); // ← critical: reveals model at correct size
+// poster auto handled// ← critical: reveals model at correct size
 
     mvloader.classList.add('hidden');
     erroverlay.classList.remove('show');
     retrybtn.classList.remove('show');
     badge.classList.add('visible');
-
+});
     
 
   // Load error
@@ -723,18 +709,7 @@ function wireCard(i) {
     arbtn.textContent = 'Unavailable';
   });
 
-  // AR status — update button label based on AR session state
-  mv.addEventListener('ar-status', e => {
-    const status = e.detail.status;
-    if (status === 'session-started') {
-      arlaunch.textContent = '✦ AR Active';
-      arlaunch.disabled = false;
-    }
-    if (status === 'failed' || status === 'not-presenting') {
-      arlaunch.textContent = '✦ Place in Real World';
-      arlaunch.disabled = false;
-    }
-  });
+
 
   // 3D toggle button
   v3dbtn.onclick = () => toggle3D(i);
