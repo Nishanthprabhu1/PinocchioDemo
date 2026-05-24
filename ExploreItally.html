@@ -556,7 +556,7 @@ landmarks.forEach((l, i) => {
         ar
         ar-modes="${isIOS ? 'quick-look webxr' : 'scene-viewer webxr'}"
         ar-placement="floor"
-        ar-scale="fixed"
+        ar-scale="auto"
         xr-environment
         camera-controls
         touch-action="pan-y pinch-zoom"
@@ -773,9 +773,10 @@ function wireCard(i) {
 function updateARUI(i) {
   const s = state[i];
   if (!s.mv) return;
-  const canAR = s.mv.canActivateAR;
-  s.arwrap.style.display   = canAR ? 'flex'  : 'none';
-  s.arnosup.style.display  = canAR ? 'none'  : 'block';
+
+  // Always show AR button
+  s.arwrap.style.display = 'flex';
+  s.arnosup.style.display = 'none';
 }
 
 /* ═══════════════════════════════════════════════════
@@ -851,21 +852,46 @@ function toggle3D(i) {
 ═══════════════════════════════════════════════════ */
 function doActivateAR(i) {
   const s = state[i];
-  if (!s.mv.canActivateAR) {
+
+  try {
+
+    // Force reveal before AR
+    s.mv.dismissPoster();
+
+    // Small delay improves Android launch stability
+    setTimeout(() => {
+      s.mv.activateAR();
+    }, 150);
+
+  } catch (e) {
+
+    console.warn('AR launch failed:', e);
+
     s.arnosup.style.display = 'block';
-    s.arwrap.style.display  = 'none';
-    return;
+    s.arnosup.textContent = 'AR failed to launch';
+
   }
-  try { s.mv.activateAR(); } catch(e) { console.warn('activateAR:', e); }
 }
 
 function launchAR(i) {
+
   const s = state[i];
+
+  // Open 3D automatically before AR
+  if (!s.showing3D) {
+    activate3D(i);
+  }
+
   if (s.ready) {
+
     doActivateAR(i);
+
   } else {
+
     s.pendingAR = true;
+
     startLoad(i);
+
   }
 }
 
