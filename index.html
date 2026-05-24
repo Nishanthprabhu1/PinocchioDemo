@@ -294,9 +294,6 @@
       border: 1px solid rgba(196,160,48,0.18); pointer-events: none; z-index: 3;
     }
 
-    /* FIX 1: model-viewer starts hidden via a wrapper, not opacity:0 on the element itself.
-       This avoids the pointer-events:none race condition and keeps the element
-       accessible for activateAR() as soon as it's loaded. */
     #mv-wrapper {
       position: absolute; inset: 0; z-index: 2;
       opacity: 0; transition: opacity 0.35s ease;
@@ -314,9 +311,6 @@
       position: absolute; inset: 0;
     }
 
-    /* FIX 2: The built-in AR button slot must exist in the DOM for activateAR() 
-       to work on Android (scene-viewer / webxr). We style it invisible and 
-       use our own button which calls activateAR() programmatically. */
     model-viewer > [slot="ar-button"] {
       display: none !important;
     }
@@ -404,7 +398,6 @@
     }
     .funzone-btn:hover { opacity: 0.85; }
 
-    /* FIX 3: AR not-supported message */
     .ar-not-supported {
       display: none; position: absolute; bottom: 16px; left: 50%;
       transform: translateX(-50%); z-index: 6;
@@ -476,16 +469,30 @@
         <div class="mv-loader-text">LOADING MODEL</div>
       </div>
 
-      <!-- Photo fallback shown while model loads (z-index 1, behind mv-wrapper) -->
+      <!-- Photo fallback shown while model loads -->
       <div id="modal-photo" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;z-index:1;"></div>
 
-      <!-- FIX 1: model-viewer wrapped in opacity-controlled div.
-           The wrapper handles show/hide so activateAR() is always callable. -->
+      <!-- model-viewer wrapped in opacity-controlled div -->
       <div id="mv-wrapper">
+        <!--
+        ┌─────────────────────────────────────────────────────────┐
+        │  ar-scale="fixed"  ← CRITICAL: forces model-viewer to   │
+        │  use --ar-scale CSS var for real-world AR size.          │
+        │  Without this, AR auto-sizes and ignores your scale.     │
+        │                                                          │
+        │  xr-environment  ← improves floor detection speed       │
+        │                                                          │
+        │  The actual scale value is set per-dish in LOCAL_ASSETS  │
+        │  (see JS below). It applies to BOTH the 3D preview       │
+        │  (scale attr) AND the AR real-world size (--ar-scale).   │
+        └─────────────────────────────────────────────────────────┘
+        -->
         <model-viewer id="main-mv"
-          ar ar-modes="webxr scene-viewer quick-look"
+          ar
+          ar-modes="webxr scene-viewer quick-look"
           ar-placement="floor"
-          ar-scale="auto"
+          ar-scale="fixed"
+          xr-environment
           camera-controls touch-action="pan-y"
           shadow-intensity="1" shadow-softness="0.8"
           environment-image="neutral" exposure="1"
@@ -494,7 +501,7 @@
           max-camera-orbit="auto auto 140%"
           interaction-prompt="none"
           loading="eager" reveal="auto">
-          <!-- FIX 2: Required slot for activateAR() to work — hidden via CSS -->
+          <!-- slot="ar-button" must exist in DOM for activateAR() on Android -->
           <button slot="ar-button" id="mv-ar-slot-btn" aria-hidden="true"></button>
         </model-viewer>
       </div>
@@ -502,12 +509,12 @@
       <div class="mv-ar-badge" id="mv-ar-badge">✦ AR Ready</div>
       <div class="scale-info"  id="scale-info">Actual portion size</div>
 
-      <!-- Our custom AR launch button (shown when model has AR support) -->
+      <!-- Custom AR launch button -->
       <div class="mv-ar-btn-wrap" id="mv-ar-btn-wrap">
         <button class="modal-ar-launch-btn" id="modal-ar-launch-btn">✦ View On Table</button>
       </div>
 
-      <!-- Shown when device doesn't support AR at all -->
+      <!-- Shown when device doesn't support AR -->
       <div class="ar-not-supported" id="ar-not-supported">
         AR not supported on this device — rotate to view in 3D
       </div>
@@ -532,56 +539,78 @@
 </footer>
 
 <script>
-/* ─────────────────────────────────────────────
+/* ─────────────────────────────────────────────────────────────────────
    CONFIGURATION
-───────────────────────────────────────────── */
+   ─────────────────────────────────────────────────────────────────────
+
+   LOCAL_ASSETS — per-dish 3D model config
+   ════════════════════════════════════════
+
+   scale
+   ─────
+   A multiplier applied to the model's native size.
+   It controls BOTH:
+     • the 3D preview panel size  (model-viewer `scale` attribute)
+     • the real-world AR size     (CSS `--ar-scale` variable, used
+                                   because ar-scale="fixed" is set)
+
+   HOW TO TUNE SCALE FOR AR:
+     The model's native size is whatever the 3D artist exported
+     (usually in metres). scale=1 means "as exported".
+
+     If your Tiramisu model was exported at 0.01 m (1 cm) but
+     should appear ~12 cm tall in AR, set scale = 12.
+
+     If your Bignè model was exported at 1 m (1 metre) but
+     should appear ~8 cm tall, set scale = 0.08.
+
+     Rule of thumb:
+       scale = (desired real-world size in metres) ÷ (model native size in metres)
+
+   orbit
+   ─────
+   Camera angle for the 3D preview panel only (does not affect AR).
+   Format: "thetaDeg phiDeg radiusPct"
+     theta = horizontal rotation (0 = front)
+     phi   = vertical angle (90 = top-down, 0 = side-on)
+     radius= zoom (100% = default fit, 80% = closer, 120% = further)
+
+   ─────────────────────────────────────────────────────────────────── */
 const ASSETS_BASE = '3d-model';
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTEkmIGoRgD1rQNmDgmY3lvB7WBOg86iOHHrS0MJ6qQiReuDHsUyX3YV7KoWXxTbefyBUWPTHpvUOt3/pub?output=csv';
 
-// scale      = uniform scale applied to model-viewer `scale` attr for 3D preview panel only
-// minArScale = minimum real-world size in AR when user pinches to shrink  (metres)
-// maxArScale = maximum real-world size in AR when user pinches to grow    (metres)
-// orbit      = per-dish camera-orbit for the 3D preview (theta, phi, radius)
-// NOTE: ar-scale="auto" on the element lets model-viewer pick a sensible default
-//       in AR, then min-scale/max-scale bound the pinch-to-resize range.
-//       ar-scale="fixed" was REMOVED — it ignored the JS scale entirely in AR.
 const LOCAL_ASSETS = {
+  // ── CHANGE SCALE HERE ──────────────────────────────────────────────
   // Bignè ~8 cm pastry
+  // scale: 0.25 means the model appears at 25% of its exported size in AR
   'pistachio-sauce-bigne-with-ricotta': {
     folder: 'Pistachio-Sauce-Bigne-with-Ricotta',
     file:   'Pistachio-Sauce-Bigne-with-Ricotta',
-    scale:  0.25,
-    minArScale: 0.4,
-    maxArScale: 1.2,
+    scale:  0.25,   // ← adjust this number to resize in AR
     orbit:  '30deg 70deg 110%',
   },
   // Tiramisu ~12 cm × 8 cm × 6 cm tall
   'pinocchio-tiramisu': {
     folder: 'Pinocchio-Tiramisu',
     file:   'Pinocchio-Tiramisu',
-    scale:  4,
-    minArScale: 0.5,
-    maxArScale: 1.5,
+    scale:  4,      // ← adjust this number to resize in AR
     orbit:  '20deg 65deg 110%',
   },
-  // Lasagne plate ~26 cm wide — lower phi shows the top face properly
+  // Lasagne plate ~26 cm wide
   'cheesy-green-lasagne': {
     folder: 'Cheesy-Green-Lasagne',
     file:   'Cheesy-Green-Lasagne',
-    scale:  4,
-    minArScale: 0.6,
-    maxArScale: 1.6,
+    scale:  4,      // ← adjust this number to resize in AR
     orbit:  '0deg 55deg 105%',
   },
   // Calamari bowl ~20 cm wide
   'fried-calamari': {
     folder: 'Fried-Calamari',
     file:   'Fried-Calamari',
-    scale:  4,
-    minArScale: 0.5,
-    maxArScale: 1.5,
+    scale:  4,      // ← adjust this number to resize in AR
     orbit:  '15deg 65deg 105%',
   },
+  // ── END SCALE CONFIG ───────────────────────────────────────────────
 };
 
 const EMOJI_MAP = {
@@ -637,9 +666,7 @@ const csvPromise = (async () => {
 })();
 
 /* ─────────────────────────────────────────────
-   FIX 4: model-viewer module — loaded once, 
-   tracked with a proper resolved flag so we 
-   never call .pause()/.play() before it's ready
+   model-viewer module — load once, track ready state
 ───────────────────────────────────────────── */
 let mvModulePromise = null;
 let mvModuleReady = false;
@@ -652,7 +679,7 @@ function ensureModelViewerLoaded() {
   return mvModulePromise;
 }
 
-/* GLB prefetch */
+/* GLB prefetch — queues the binary download in the browser cache */
 const glbPrefetched = new Set();
 function prefetchGlb(glbPath) {
   if (!glbPath || glbPrefetched.has(glbPath)) return;
@@ -684,16 +711,14 @@ function normalizeKey(str) {
 function getLocalAssets(dishName) {
   const key   = normalizeKey(dishName);
   const entry = LOCAL_ASSETS[key];
-  if (!entry) return { posterPath:'', glbPath:'', usdzPath:'', scale:0.05, minArScale:0.5, maxArScale:1.5, orbit:'0deg 75deg 105%' };
+  if (!entry) return { posterPath:'', glbPath:'', usdzPath:'', scale:0.05, orbit:'0deg 75deg 105%' };
   const base = `${ASSETS_BASE}/${entry.folder}/${entry.file}`;
   return {
-    posterPath:  `${base}.png`,
-    glbPath:     `${base}.glb`,
-    usdzPath:    `${base}.usdz`,
-    scale:       entry.scale,
-    minArScale:  entry.minArScale  ?? 0.5,
-    maxArScale:  entry.maxArScale  ?? 1.5,
-    orbit:       entry.orbit       ?? '0deg 75deg 105%',
+    posterPath: `${base}.png`,
+    glbPath:    `${base}.glb`,
+    usdzPath:   `${base}.usdz`,
+    scale:      entry.scale,
+    orbit:      entry.orbit ?? '0deg 75deg 105%',
   };
 }
 
@@ -739,7 +764,6 @@ function rowToDish(row) {
     veg: truthy(row['veg']), available: truthy(row['available']),
     glbPath: local.glbPath, usdzPath: local.usdzPath,
     posterPath: local.posterPath, scale: local.scale,
-    minArScale: local.minArScale, maxArScale: local.maxArScale,
     orbit: local.orbit,
     emoji: EMOJI_MAP[normalizeKey(row['name'])]||'🍽️',
   };
@@ -842,10 +866,10 @@ function renderItems() {
 }
 
 /* ─────────────────────────────────────────────
-   MODAL — all AR fixes applied here
+   MODAL
 ───────────────────────────────────────────── */
 const elMV            = document.getElementById('main-mv');
-const elMvWrapper     = document.getElementById('mv-wrapper');      // FIX 1
+const elMvWrapper     = document.getElementById('mv-wrapper');
 const elMvLoader      = document.getElementById('mv-loader');
 const elPhoto         = document.getElementById('modal-photo');
 const elArBadge       = document.getElementById('mv-ar-badge');
@@ -855,15 +879,11 @@ const elArLaunch      = document.getElementById('modal-ar-launch-btn');
 const elArNotSupported= document.getElementById('ar-not-supported');
 
 let currentDish = null;
-// FIX 5: Track whether a model src has been loaded at least once, to handle
-// the "same src reopened" case without skipping onMVLoaded.
-let lastLoadedSrc = null;
 
 function showLoader() { elMvLoader.classList.remove('hidden'); }
 function hideLoader() { elMvLoader.classList.add('hidden'); }
-
-function showMV()  { elMvWrapper.classList.add('mv-visible'); }
-function hideMV()  { elMvWrapper.classList.remove('mv-visible'); }
+function showMV()     { elMvWrapper.classList.add('mv-visible'); }
+function hideMV()     { elMvWrapper.classList.remove('mv-visible'); }
 
 function setPhoto(d) {
   if (d.posterPath) {
@@ -878,11 +898,39 @@ function setPhoto(d) {
   elPhoto.style.display = 'flex';
 }
 
-/* FIX 6: Check AR support properly after model-viewer loads */
 function updateARButtonVisibility() {
   const canAR = elMV.canActivateAR;
-  elArBtnWrap.style.display    = canAR ? 'flex' : 'none';
+  elArBtnWrap.style.display      = canAR ? 'flex' : 'none';
   elArNotSupported.style.display = canAR ? 'none' : 'block';
+}
+
+function applyDishToModelViewer(d) {
+  /* ── FIX 1: ar-scale="fixed" + --ar-scale CSS var ──────────────────
+     ar-scale="fixed" is set on the element in HTML.
+     Setting --ar-scale here tells model-viewer exactly how big to
+     render the model in AR (as a multiplier on native metre size).
+     This is the ONLY combination that produces deterministic AR sizing.
+
+     The same `s` value also drives the 3D preview panel via the
+     `scale` attribute, so preview and AR are consistent.
+  ──────────────────────────────────────────────────────────────────── */
+  const s = (d.scale ?? 1).toFixed(6);
+
+  // 3D preview size
+  elMV.setAttribute('scale', `${s} ${s} ${s}`);
+
+  // AR real-world size — ar-scale="fixed" reads this CSS var
+  elMV.style.setProperty('--ar-scale', s);
+
+  // Per-dish camera angle for the 3D preview
+  elMV.setAttribute('camera-orbit', d.orbit ?? '0deg 75deg 105%');
+
+  // iOS USDZ
+  if (isIOS && d.usdzPath) {
+    elMV.setAttribute('ios-src', d.usdzPath);
+  } else {
+    elMV.removeAttribute('ios-src');
+  }
 }
 
 function openModal(id) {
@@ -890,7 +938,7 @@ function openModal(id) {
   if (!d) return;
   currentDish = d;
 
-  /* Populate text content */
+  /* Populate text */
   document.getElementById('modal-name').textContent = d.name;
   document.getElementById('modal-jp').textContent   = d.jp||'';
   document.getElementById('modal-desc').textContent = d.desc;
@@ -912,47 +960,25 @@ function openModal(id) {
   showLoader();
 
   if (d.glbPath) {
+    /* FIX 2: Start GLB prefetch + module load the instant modal opens.
+       By the time the user reads the description and taps "View On Table",
+       the GLB will already be in the browser cache / parsed. */
     prefetchGlb(d.glbPath);
 
     ensureModelViewerLoaded().then(() => {
-      /* Guard: user may have closed modal before module finished loading */
-      if (currentDish?.id !== d.id) return;
+      if (currentDish?.id !== d.id) return; // user closed modal
 
-      /* Set ios-src BEFORE src so iOS USDZ is ready when AR launches */
-      if (isIOS && d.usdzPath) {
-        elMV.setAttribute('ios-src', d.usdzPath);
-      } else {
-        elMV.removeAttribute('ios-src');
-      }
-
-      /* ── SCALE FIX ──────────────────────────────────────────────────────
-         The  attribute controls size in the 3D PREVIEW PANEL only.
-         In AR (ar-scale="auto"), model-viewer ignores  and instead
-         uses min-scale / max-scale to bound the user pinch-to-resize range.
-         We set both so the preview and AR stay in sync.
-      ────────────────────────────────────────────────────────────────────── */
-      const s = (d.scale ?? 1).toFixed(6);
-      elMV.setAttribute('scale', `${s} ${s} ${s}`);
-
-      /* AR pinch-to-resize bounds */
-      elMV.setAttribute('min-scale', (d.minArScale ?? 0.5).toFixed(4));
-      elMV.setAttribute('max-scale', (d.maxArScale ?? 1.5).toFixed(4));
-
-      /* Per-dish camera angle for the 3D preview panel */
-      elMV.setAttribute('camera-orbit', d.orbit ?? '0deg 75deg 105%');
+      applyDishToModelViewer(d);
 
       if (elMV.getAttribute('src') === d.glbPath) {
-        /* Same src — model already loaded, trigger ready state directly */
+        /* Same GLB already loaded — trigger ready state immediately */
         onMVLoaded(d);
       } else {
-        /* New src — assign and wait for the load event */
-        lastLoadedSrc = d.glbPath;
+        /* New GLB — assign src and wait for load event */
         elMV.setAttribute('src', d.glbPath);
       }
     });
-
   } else {
-    /* No 3D model — just show the photo fallback */
     hideLoader();
   }
 
@@ -961,16 +987,13 @@ function openModal(id) {
 }
 
 function onMVLoaded(d) {
-  /* Guard: a different dish may have been opened while this one was loading */
   if (currentDish?.id !== d.id) return;
 
   hideLoader();
   elPhoto.style.display = 'none';
-  showMV();                           /* FIX 1: use wrapper instead of class on model-viewer */
+  showMV();
   elArBadge.classList.add('visible');
   elScaleInfo.textContent = 'Actual portion size';
-
-  /* FIX 6: only show AR button if device actually supports it */
   updateARButtonVisibility();
 }
 
@@ -982,7 +1005,6 @@ elMV.addEventListener('load', () => {
 
 elMV.addEventListener('error', () => {
   hideLoader();
-  /* Show photo fallback on model load error */
   if (currentDish) setPhoto(currentDish);
   elArLaunch.disabled = false;
   elArLaunch.textContent = '⚠ Retry';
@@ -1000,52 +1022,41 @@ elMV.addEventListener('ar-status', e => {
   }
 });
 
-/* FIX 8: AR launch button — single clean handler, no onclick reassignment */
+/* AR launch button */
 elArLaunch.addEventListener('click', () => {
-  if (elArLaunch.disabled) return;
-
-  elArLaunch.disabled = true;
-  elArLaunch.innerHTML = `<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(245,237,224,0.3);border-top-color:var(--washi);border-radius:50%;animation:spin 0.8s linear infinite;vertical-align:middle;"></span> Loading…`;
+  if (elArLaunch.disabled || !currentDish) return;
+  const d = currentDish;
 
   ensureModelViewerLoaded().then(() => {
-    /* FIX 9: Wait for model to be ready before calling activateAR() */
-    const tryLaunch = () => {
-      if (!currentDish) return;
-      if (!elMV.canActivateAR) {
-        elArLaunch.disabled = false;
-        elArLaunch.textContent = '⚠ AR not supported';
-        elArNotSupported.style.display = 'block';
-        return;
-      }
-      try {
-        elMV.activateAR();
-        elArLaunch.disabled = false;
-        elArLaunch.textContent = '✦ Launch AR';
-      } catch(e) {
-        console.warn('activateAR error:', e);
-        elArLaunch.disabled = false;
-        elArLaunch.textContent = '⚠ Retry';
-      }
+    if (currentDish?.id !== d.id) return;
+
+    if (!elMV.canActivateAR) {
+      elArNotSupported.style.display = 'block';
+      elArBtnWrap.style.display = 'none';
+      return;
+    }
+
+    const launch = () => {
+      if (currentDish?.id !== d.id) return;
+      try { elMV.activateAR(); } catch(e) { console.warn('activateAR:', e); }
     };
 
     if (elMvWrapper.classList.contains('mv-visible')) {
-      /* Model already loaded */
-      tryLaunch();
+      /* Model fully loaded — launch with zero delay */
+      launch();
     } else {
-      /* Wait for model to finish loading */
-      elMV.addEventListener('load', tryLaunch, { once: true });
-      /* Timeout fallback — don't leave button stuck */
-      setTimeout(() => {
-        if (elArLaunch.disabled && elArLaunch.innerHTML.includes('Loading')) {
-          elArLaunch.disabled = false;
-          elArLaunch.textContent = '⚠ Retry';
-        }
-      }, 15000);
+      /* Model still parsing — show indicator, launch on load */
+      elArLaunch.disabled = true;
+      elArLaunch.textContent = '⏳ Loading…';
+      elMV.addEventListener('load', () => {
+        elArLaunch.disabled = false;
+        elArLaunch.textContent = '✦ View On Table';
+        launch();
+      }, { once: true });
     }
   });
 });
 
-/* FIX 4: Only pause/play when module is confirmed loaded */
 function safePause() { if (mvModuleReady && typeof elMV.pause === 'function') elMV.pause(); }
 function safePlay()  { if (mvModuleReady && typeof elMV.play  === 'function') elMV.play();  }
 
@@ -1057,9 +1068,7 @@ function closeModal() {
 }
 
 document.getElementById('modal-overlay').addEventListener('transitionend', () => {
-  if (document.getElementById('modal-overlay').classList.contains('open')) {
-    safePlay();
-  }
+  if (document.getElementById('modal-overlay').classList.contains('open')) safePlay();
 });
 
 document.addEventListener('visibilitychange', () => {
