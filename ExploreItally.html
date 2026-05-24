@@ -547,37 +547,47 @@ landmarks.forEach((l, i) => {
       <span class="emoji-fallback">🏛️</span>
     </div>
 
-    <!-- model-viewer in opacity wrapper — same pattern as menu AR page -->
-    <div class="mv-wrapper" id="mvwrap-${i}">
-      <model-viewer
-        id="mv-${i}"
-        src="${glbPath}"
-        <model-viewer
-  id="mv-${i}"
-  src="${glbPath}"
-  ${isIOS && l.hasUsdz ? `ios-src="${usdzPath}"` : ''}
-  ar
-  ar-modes="${isIOS ? 'quick-look webxr' : 'scene-viewer webxr'}"
-  ar-placement="floor"
-  ar-scale="auto"
-  xr-environment
-  camera-controls
-  disable-pan
-  touch-action="pan-y pinch-zoom"
-  shadow-intensity="1.2"
-  shadow-softness="0.8"
-  environment-image="neutral"
-  exposure="1.1"
-  camera-orbit="${l.orbit}"
-  min-camera-orbit="auto auto 60%"
-  max-camera-orbit="auto auto 140%"
-  field-of-view="18deg"
-  interpolation-decay="200"
-  interaction-prompt="none"
-  loading="eager"
-  reveal="manual">
-        <button slot="ar-button" aria-hidden="true" style="display:none"></button>
-      </model-viewer>
+    <!-- model-viewer -->
+<div class="mv-wrapper" id="mvwrap-${i}">
+
+  <model-viewer
+    id="mv-${i}"
+    src="${glbPath}"
+    ${isIOS && l.hasUsdz ? `ios-src="${usdzPath}"` : ''}
+
+    ar
+    ar-modes="scene-viewer quick-look webxr"
+    ar-placement="floor"
+    ar-scale="auto"
+
+    camera-controls
+    disable-pan
+
+    touch-action="pan-y pinch-zoom"
+
+    shadow-intensity="1"
+    shadow-softness="0.8"
+
+    environment-image="neutral"
+    exposure="1"
+
+    camera-orbit="${l.orbit}"
+
+    loading="eager"
+
+    interaction-prompt="none"
+
+    poster="${pngPath}"
+
+    autoplay
+
+    style="width:100%;height:100%;background:transparent;">
+
+    <button slot="ar-button"></button>
+
+  </model-viewer>
+
+</div>
     </div>
 
     <!-- Loader -->
@@ -603,10 +613,7 @@ landmarks.forEach((l, i) => {
     <!-- AR not supported notice -->
     <div class="ar-not-supported" id="arnosup-${i}">AR not supported on this device</div>
 
-    <!-- Custom AR launch button (same as menu page) -->
-    <div class="ar-launch-wrap" id="arwrap-${i}">
-      <button class="ar-launch-btn" id="arlaunch-${i}">✦ Place in Real World</button>
-    </div>
+   
 
   </div>
 
@@ -700,12 +707,7 @@ function wireCard(i) {
     retrybtn.classList.remove('show');
     badge.classList.add('visible');
 
-    // Show/hide AR launch button based on device capability
-    updateARUI(i);
-
-    if (s.pending3D) { s.pending3D = false; activate3D(i); }
-    if (s.pendingAR) { s.pendingAR = false; doActivateAR(i); }
-  });
+    
 
   // Load error
   mv.addEventListener('error', () => {
@@ -738,24 +740,16 @@ function wireCard(i) {
   v3dbtn.onclick = () => toggle3D(i);
 
   // Bottom bar AR button (loads + launches)
-  arbtn.onclick = () => launchAR(i);
+  arbtn.onclick = () => {
 
-  // Custom floating AR launch button (only shown when model is ready + AR supported)
-  arlaunch.addEventListener('click', () => {
-    if (arlaunch.disabled) return;
-    if (!s.ready) {
-      // Model still loading — wait for it
-      arlaunch.disabled = true;
-      arlaunch.textContent = '⏳ Loading…';
-      mv.addEventListener('load', () => {
-        arlaunch.disabled = false;
-        arlaunch.textContent = '✦ Place in Real World';
-        doActivateAR(i);
-      }, { once: true });
-    } else {
-      doActivateAR(i);
-    }
-  });
+  const internalARButton =
+    mv.querySelector('[slot="ar-button"]');
+
+  if (internalARButton) {
+    internalARButton.click();
+  }
+
+};
 
   // Retry button
   retrybtn.onclick = () => {
@@ -771,17 +765,7 @@ function wireCard(i) {
   card.addEventListener('touchstart',  () => prefetchGlb(s.glbPath), { once: true, passive: true });
 }
 
-/* ═══════════════════════════════════════════════════
-   UPDATE AR UI — shows floating button or notice
-═══════════════════════════════════════════════════ */
-function updateARUI(i) {
-  const s = state[i];
-  if (!s.mv) return;
 
-  // Always show AR button
-  s.arwrap.style.display = 'flex';
-  s.arnosup.style.display = 'none';
-}
 
 /* ═══════════════════════════════════════════════════
    START LOAD
@@ -849,55 +833,7 @@ function toggle3D(i) {
   else             { s.pending3D = true; startLoad(i); }
 }
 
-/* ═══════════════════════════════════════════════════
-   AR LAUNCH
-   Uses canActivateAR check + custom floating button
-   pattern from the menu page.
-═══════════════════════════════════════════════════ */
-function doActivateAR(i) {
-  const s = state[i];
 
-  try {
-
-    // Force reveal before AR
-    s.mv.dismissPoster();
-
-    // Small delay improves Android launch stability
-    setTimeout(() => {
-      s.mv.activateAR();
-    }, 150);
-
-  } catch (e) {
-
-    console.warn('AR launch failed:', e);
-
-    s.arnosup.style.display = 'block';
-    s.arnosup.textContent = 'AR failed to launch';
-
-  }
-}
-
-function launchAR(i) {
-
-  const s = state[i];
-
-  // Open 3D automatically before AR
-  if (!s.showing3D) {
-    activate3D(i);
-  }
-
-  if (s.ready) {
-
-    doActivateAR(i);
-
-  } else {
-
-    s.pendingAR = true;
-
-    startLoad(i);
-
-  }
-}
 
 /* ═══════════════════════════════════════════════════
    TAB VISIBILITY — pause/play model-viewer
