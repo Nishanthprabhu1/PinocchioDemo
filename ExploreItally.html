@@ -552,26 +552,30 @@ landmarks.forEach((l, i) => {
       <model-viewer
         id="mv-${i}"
         src="${glbPath}"
-        ${isIOS && l.hasUsdz ? `ios-src="${usdzPath}"` : ''}
-        ar
-        ar-modes="${isIOS ? 'quick-look webxr' : 'scene-viewer webxr'}"
-        ar-placement="floor"
-        ar-scale="auto"
-        xr-environment
-        camera-controls
-        touch-action="pan-y pinch-zoom"
-        shadow-intensity="1.2"
-        shadow-softness="0.8"
-        environment-image="neutral"
-        exposure="1.1"
-        camera-orbit="${l.orbit}"
-        min-camera-orbit="auto auto 60%"
-        max-camera-orbit="auto auto 140%"
-        field-of-view="18deg"
-        interpolation-decay="200"
-        interaction-prompt="none"
-        loading="${isFirst ? 'eager' : 'lazy'}"
-        reveal="manual">
+        <model-viewer
+  id="mv-${i}"
+  src="${glbPath}"
+  ${isIOS && l.hasUsdz ? `ios-src="${usdzPath}"` : ''}
+  ar
+  ar-modes="${isIOS ? 'quick-look webxr' : 'scene-viewer webxr'}"
+  ar-placement="floor"
+  ar-scale="auto"
+  xr-environment
+  camera-controls
+  disable-pan
+  touch-action="pan-y pinch-zoom"
+  shadow-intensity="1.2"
+  shadow-softness="0.8"
+  environment-image="neutral"
+  exposure="1.1"
+  camera-orbit="${l.orbit}"
+  min-camera-orbit="auto auto 60%"
+  max-camera-orbit="auto auto 140%"
+  field-of-view="18deg"
+  interpolation-decay="200"
+  interaction-prompt="none"
+  loading="eager"
+  reveal="manual">
         <button slot="ar-button" aria-hidden="true" style="display:none"></button>
       </model-viewer>
     </div>
