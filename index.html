@@ -510,9 +510,15 @@
       <div class="scale-info"  id="scale-info">Actual portion size</div>
 
       <!-- Custom AR launch button -->
-      <div class="mv-ar-btn-wrap" id="mv-ar-btn-wrap">
-        <button class="modal-ar-launch-btn" id="modal-ar-launch-btn">✦ View On Table</button>
-      </div>
+<div class="mv-ar-btn-wrap" id="mv-ar-btn-wrap">
+  <button class="modal-ar-launch-btn" id="modal-ar-launch-btn">
+    ✦ View On Table
+  </button>
+
+  <button class="modal-ar-launch-btn" id="capture-btn">
+    📸 Take Photo
+  </button>
+</div>
 
       <!-- Shown when device doesn't support AR -->
       <div class="ar-not-supported" id="ar-not-supported">
@@ -1137,7 +1143,59 @@ document.addEventListener("keydown", e => {
     e.preventDefault();
   }
 });
+/* ─────────────────────────────────────────────
+   SCREENSHOT FEATURE
+───────────────────────────────────────────── */
 
+const captureBtn = document.getElementById('capture-btn');
+
+captureBtn.addEventListener('click', async () => {
+
+  try {
+
+    const viewerWrap = document.getElementById('modal-viewer-wrap');
+
+    // Create canvas
+    const canvas = document.createElement('canvas');
+    canvas.width = viewerWrap.clientWidth;
+    canvas.height = viewerWrap.clientHeight;
+
+    const ctx = canvas.getContext('2d');
+
+    // Draw background image if exists
+    const bgImg = viewerWrap.querySelector('#modal-photo img');
+
+    if (bgImg && bgImg.complete) {
+      ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+    }
+
+    // Capture model-viewer canvas
+    const mvCanvas = elMV.shadowRoot.querySelector('canvas');
+
+    if (mvCanvas) {
+      ctx.drawImage(mvCanvas, 0, 0, canvas.width, canvas.height);
+    }
+
+    // Add watermark
+    ctx.fillStyle = "rgba(255,255,255,0.85)";
+    ctx.font = "16px sans-serif";
+    ctx.fillText("PINOCCHIO AR MENU", 20, canvas.height - 20);
+
+    // Download image
+    const link = document.createElement('a');
+    link.download = `${currentDish.name}-AR-Photo.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+
+  } catch (err) {
+
+    console.error("Screenshot failed:", err);
+
+    alert("Screenshot not supported on this device.");
+
+  }
+
+});
 init();
 </script>
 </body>
