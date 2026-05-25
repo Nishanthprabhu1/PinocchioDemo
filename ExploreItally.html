@@ -583,14 +583,6 @@ landmarks.forEach((l, i) => {
   AR not supported on this device
 </div>
 
-
-<div class="landmark-info">
-    
-
-   
-
-  </div>
-
   <div class="landmark-info">
     <div class="landmark-name">${l.name}</div>
     <div class="landmark-city">${l.city}</div>
@@ -714,8 +706,30 @@ function wireCard(i) {
   // 3D toggle button
   v3dbtn.onclick = () => toggle3D(i);
 
-  // Bottom bar AR button (loads + launches)
-  arbtn.onclick = () => {
+ arbtn.onclick = () => {
+
+  // Show 3D first
+  if (!s.showing3D) {
+
+    activate3D(i);
+
+    if (!s.ready) {
+      startLoad(i);
+
+      mv.addEventListener('load', () => {
+
+        const internalARButton =
+          mv.querySelector('[slot="ar-button"]');
+
+        if (internalARButton) {
+          internalARButton.click();
+        }
+
+      }, { once:true });
+
+      return;
+    }
+  }
 
   const internalARButton =
     mv.querySelector('[slot="ar-button"]');
