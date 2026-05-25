@@ -87,7 +87,7 @@ body {
   overflow-y: hidden;
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
-  touch-action: pan-x;
+  touch-action: auto;
 }
 .explorer-grid::-webkit-scrollbar { display: none; }
 
@@ -121,7 +121,9 @@ body {
   object-fit: cover;
   z-index: 2;
   transition: opacity .45s;
-  pointer-events: none;
+  .model-wrap model-viewer {
+  pointer-events: auto;
+}
 }
 .model-poster {
   opacity: 0;
@@ -517,21 +519,18 @@ LANDMARKS.forEach((lm, idx) => {
   src="${glbPath}"
   ${IS_IOS ? `ios-src="${usdzPath}"` : ''}
 
+  <model-viewer
+  id="mv-${idx}"
+  src="${glbPath}"
+
   ar
   ar-modes="${arModes}"
   ar-placement="floor"
   ar-scale="fixed"
 
-  renderer="webgl"
-
-  xr-environment
-
   camera-controls
 
-interaction-prompt-style="wiggle"
-interaction-prompt="auto"
-
-touch-action="none"
+  disable-pan="false"
 
   min-camera-orbit="auto auto 40%"
   max-camera-orbit="auto auto 900%"
@@ -539,18 +538,9 @@ touch-action="none"
   min-field-of-view="20deg"
   max-field-of-view="90deg"
 
-  loading="${idx === 0 ? 'eager' : 'lazy'}"
-  reveal="auto"
+  touch-action="pan-y"
 
-  environment-image="neutral"
-
-  shadow-intensity="1.2"
-  shadow-softness="0.8"
-  exposure="1.1"
-
-  camera-orbit="${lm.orbit}"
   scale="${s} ${s} ${s}"
-
   style="--ar-scale:${s}"
 >
         <!-- Slot must exist for activateAR() to work on Android -->
