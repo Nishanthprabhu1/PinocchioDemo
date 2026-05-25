@@ -531,7 +531,7 @@ LANDMARKS.forEach((lm, idx) => {
 interaction-prompt-style="wiggle"
 interaction-prompt="auto"
 
-touch-action="pan-y"
+touch-action="none"
 
   min-camera-orbit="auto auto 40%"
   max-camera-orbit="auto auto 900%"
@@ -687,26 +687,7 @@ touch-action="pan-y"
     const active = wrap.classList.toggle('active');
     btn3d.classList.toggle('is-active', active);
     btn3d.textContent = active ? '✕ 2D' : '⬡ 3D';
-    if (active) {
-
-  wrap._th = e => {
-
-    // allow pinch zoom with 2 fingers
-    if (e.touches && e.touches.length > 1) return;
-
-    e.stopPropagation();
-  };
-
-  wrap.addEventListener('touchstart', wrap._th, { passive: true });
-  wrap.addEventListener('touchmove', wrap._th, { passive: true });
-
-} else {
-
-  wrap.removeEventListener('touchstart', wrap._th);
-  wrap.removeEventListener('touchmove', wrap._th);
-
-  wrap._th = null;
-}
+    
   });
 /* ── Screenshot Capture ── */
 captureBtn.addEventListener('click', async () => {
@@ -761,7 +742,7 @@ ctx.scale(scale, scale);
       • Google Scene Viewer fallback on Android
       • AR Quick Look on iOS via ios-src USDZ
 
-    ar-scale="fixed" + --ar-scale CSS var ensures the model appears
+    ar-scale="auto" + --ar-scale CSS var ensures the model appears
     at the correct real-world size regardless of viewing distance.
   */
   btnAR.addEventListener('click', () => {
