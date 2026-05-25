@@ -175,7 +175,44 @@ model-viewer > [slot="ar-button"] { display: none !important; }
   pointer-events: none;
 }
 .ar-badge.visible { opacity: 1; transform: translateY(0); }
+/* ── Screenshot button ── */
+.capture-btn {
+  position: absolute;
+  bottom: 18px;
+  right: 18px;
+  z-index: 20;
 
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+
+  border: 2px solid rgba(255,255,255,.9);
+  background: rgba(255,255,255,.18);
+  backdrop-filter: blur(12px);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 22px;
+  color: white;
+
+  cursor: pointer;
+
+  opacity: 0;
+  pointer-events: none;
+
+  transition: all .3s ease;
+}
+
+.model-wrap.active .capture-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.capture-btn:active {
+  transform: scale(.92);
+}
 /* ── Pinch hint ── */
 .pinch-hint {
   position: absolute;
@@ -452,8 +489,9 @@ LANDMARKS.forEach((lm, idx) => {
     ar-scale="fixed"
       Forces model-viewer to use --ar-scale CSS variable for sizing
       instead of auto-fitting. Without this, real-world size is random.
-
+      
     xr-environment
+    interaction-prompt-style="wiggle"
       Improves floor/surface detection speed on WebXR.
 
     ios-src
@@ -472,29 +510,50 @@ LANDMARKS.forEach((lm, idx) => {
            decoding="async"
            onerror="this.style.opacity='.1'">
 
-      <model-viewer
-        id="mv-${idx}"
-        src="${glbPath}"
-        ${IS_IOS ? `ios-src="${usdzPath}"` : ''}
-        ar
-        ar-modes="${arModes}"
-        ar-placement="floor"
-        ar-scale="fixed"
-        xr-environment
-        camera-controls
-        touch-action="none"
-        loading="${idx === 0 ? 'eager' : 'lazy'}"
-        reveal="auto"
-        environment-image="neutral"
-        shadow-intensity="1.2"
-        shadow-softness="0.8"
-        exposure="1.1"
-        camera-orbit="${lm.orbit}"
-        min-camera-orbit="auto auto 60%"
-        max-camera-orbit="auto auto 900%"
-        interaction-prompt="none"
-        scale="${s} ${s} ${s}"
-        style="--ar-scale:${s}">
+     <model-viewer
+  id="mv-${idx}"
+  src="${glbPath}"
+  ${IS_IOS ? `ios-src="${usdzPath}"` : ''}
+
+  ar
+  ar-modes="${arModes}"
+  ar-placement="floor"
+  ar-scale="fixed"
+
+  renderer="webgl"
+
+  xr-environment
+
+  camera-controls
+
+interaction-prompt-style="wiggle"
+interaction-prompt="auto"
+
+touch-action="pan-y"
+
+  min-camera-orbit="auto auto 40%"
+  max-camera-orbit="auto auto 900%"
+
+  min-field-of-view="20deg"
+  max-field-of-view="90deg"
+
+  loading="${idx === 0 ? 'eager' : 'lazy'}"
+  reveal="auto"
+
+  environment-image="neutral"
+
+  shadow-intensity="1.2"
+  shadow-softness="0.8"
+  exposure="1.1"
+
+  camera-orbit="${lm.orbit}"
+
+  interaction-prompt="none"
+
+  scale="${s} ${s} ${s}"
+
+  style="--ar-scale:${s}"
+>
         <!-- Slot must exist for activateAR() to work on Android -->
         <button slot="ar-button" aria-hidden="true" style="display:none"></button>
       </model-viewer>
@@ -514,6 +573,9 @@ LANDMARKS.forEach((lm, idx) => {
       </div>
 
       <div class="ar-badge" id="badge-${idx}">✦ AR Ready</div>
+      <button class="capture-btn" id="capture-${idx}">
+  📸
+      </button>
       <div class="pinch-hint">⟺ Pinch Zoom · Drag Rotate · Scale in AR</div>
       <div class="ar-no-support" id="nosup-${idx}">AR not available on this device</div>
     </div>
@@ -546,6 +608,7 @@ LANDMARKS.forEach((lm, idx) => {
   const nosup    = card.querySelector(`#nosup-${idx}`);
   const wrap     = card.querySelector(`#wrap-${idx}`);
   const btn3d    = card.querySelector(`#btn3d-${idx}`);
+  const captureBtn = card.querySelector(`#capture-${idx}`);
   const btnAR    = card.querySelector(`#btnar-${idx}`);
 
   let modelReady = false;
@@ -626,16 +689,68 @@ LANDMARKS.forEach((lm, idx) => {
     btn3d.classList.toggle('is-active', active);
     btn3d.textContent = active ? '✕ 2D' : '⬡ 3D';
     if (active) {
-      wrap._th = e => e.stopPropagation();
-      wrap.addEventListener('touchstart', wrap._th, { passive: true });
-      wrap.addEventListener('touchmove',  wrap._th, { passive: true });
-    } else {
-      wrap.removeEventListener('touchstart', wrap._th);
-      wrap.removeEventListener('touchmove',  wrap._th);
-      wrap._th = null;
-    }
-  });
 
+  wrap._th = e => {
+
+    // allow pinch zoom with 2 fingers
+    if (e.touches && e.touches.length > 1) return;
+
+    e.stopPropagation();
+  };
+
+  wrap.addEventListener('touchstart', wrap._th, { passive: true });
+  wrap.addEventListener('touchmove', wrap._th, { passive: true });
+
+} else {
+
+  wrap.removeEventListener('touchstart', wrap._th);
+  wrap.removeEventListener('touchmove', wrap._th);
+
+  wrap._th = null;
+}
+  });
+/* ── Screenshot Capture ── */
+captureBtn.addEventListener('click', async () => {
+
+  try {
+
+    // create canvas
+    const canvas = document.createElement('canvas');
+
+    const scale = window.devicePixelRatio || 2;
+
+canvas.width = mv.clientWidth * scale;
+canvas.height = mv.clientHeight * scale;
+
+ctx.scale(scale, scale);
+
+    const ctx = canvas.getContext('2d');
+
+    // capture model-viewer canvas
+    const internalCanvas = mv.shadowRoot.querySelector('canvas');
+
+    if (!internalCanvas) {
+      alert('Screenshot not available');
+      return;
+    }
+
+    ctx.drawImage(internalCanvas, 0, 0);
+
+    // download image
+    const link = document.createElement('a');
+
+    link.download = `${lm.name}-AR.png`;
+
+    link.href = canvas.toDataURL('image/png');
+
+    link.click();
+
+  } catch (err) {
+    console.error(err);
+    alert('Screenshot failed');
+  }
+
+});
   /*
     AR launch:
     ──────────
