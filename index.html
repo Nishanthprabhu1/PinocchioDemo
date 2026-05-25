@@ -10,10 +10,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="dns-prefetch" href="https://unpkg.com" />
   <link rel="dns-prefetch" href="https://docs.google.com" />
-<link rel="preload"
-      href="https://docs.google.com/spreadsheets/d/e/2PACX-1vTaQlx7sA43-uScjJmD3VnfXWcN0_IbtRFqhhOkKYYkc1X4L2geR83Y8cZTLz5oC4-yq7q-wYVSnPH0/pub?output=csv"
-      as="fetch"
-      crossorigin="anonymous" />
+
+  <link rel="preload"
+        href="https://docs.google.com/spreadsheets/d/e/2PACX-1vTEkmIGoRgD1rQNmDgmY3lvB7WBOg86iOHHrS0MJ6qQiReuDHsUyX3YV7KoWXxTbefyBUWPTHpvUOt3/pub?output=csv"
+        as="fetch" crossorigin="anonymous" />
 
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;600;700&family=Noto+Sans+JP:wght@300;400;500&family=Cinzel:wght@400;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
   <noscript>
@@ -476,14 +476,15 @@
       <div id="mv-wrapper">
         <!--
         ┌─────────────────────────────────────────────────────────┐
-        │  reveal="manual"  ← CRITICAL: keeps model invisible     │
-        │  until dismissPoster() is called AFTER scale is set.    │
-        │  Prevents the flash at wrong/default scale.             │
-        │                                                          │
-        │  ar-scale="fixed"  ← forces model-viewer to use         │
-        │  --ar-scale CSS var for real-world AR size.             │
+        │  ar-scale="fixed"  ← CRITICAL: forces model-viewer to   │
+        │  use --ar-scale CSS var for real-world AR size.          │
+        │  Without this, AR auto-sizes and ignores your scale.     │
         │                                                          │
         │  xr-environment  ← improves floor detection speed       │
+        │                                                          │
+        │  The actual scale value is set per-dish in LOCAL_ASSETS  │
+        │  (see JS below). It applies to BOTH the 3D preview       │
+        │  (scale attr) AND the AR real-world size (--ar-scale).   │
         └─────────────────────────────────────────────────────────┘
         -->
         <model-viewer id="main-mv"
@@ -499,8 +500,7 @@
           min-camera-orbit="auto auto 60%"
           max-camera-orbit="auto auto 140%"
           interaction-prompt="none"
-          loading="eager"
-          reveal="manual">
+          loading="eager" reveal="auto">
           <!-- slot="ar-button" must exist in DOM for activateAR() on Android -->
           <button slot="ar-button" id="mv-ar-slot-btn" aria-hidden="true"></button>
         </model-viewer>
@@ -510,25 +510,10 @@
       <div class="scale-info"  id="scale-info">Actual portion size</div>
 
       <!-- Custom AR launch button -->
-<div class="mv-ar-btn-wrap" id="mv-ar-btn-wrap">
-  <div style="
-position:absolute;
-top:-55px;
-left:50%;
-transform:translateX(-50%);
-background:rgba(0,0,0,0.7);
-color:white;
-padding:8px 14px;
-font-size:12px;
-border-radius:8px;
-white-space:nowrap;
-">
-📸 Use phone screenshot in AR mode
-</div>
-  <button class="modal-ar-launch-btn" id="modal-ar-launch-btn">
-    ✦ View On Table
-  </button>
-</div>
+      <div class="mv-ar-btn-wrap" id="mv-ar-btn-wrap">
+        <button class="modal-ar-launch-btn" id="modal-ar-launch-btn">✦ View On Table</button>
+      </div>
+
       <!-- Shown when device doesn't support AR -->
       <div class="ar-not-supported" id="ar-not-supported">
         AR not supported on this device — rotate to view in 3D
@@ -592,31 +577,37 @@ white-space:nowrap;
 
    ─────────────────────────────────────────────────────────────────── */
 const ASSETS_BASE = '3d-model';
-const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTaQlx7sA43-uScjJmD3VnfXWcN0_IbtRFqhhOkKYYkc1X4L2geR83Y8cZTLz5oC4-yq7q-wYVSnPH0/pub?output=csv';
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTEkmIGoRgD1rQNmDgmY3lvB7WBOg86iOHHrS0MJ6qQiReuDHsUyX3YV7KoWXxTbefyBUWPTHpvUOt3/pub?output=csv';
+
 const LOCAL_ASSETS = {
   // ── CHANGE SCALE HERE ──────────────────────────────────────────────
+  // Bignè ~8 cm pastry
+  // scale: 0.25 means the model appears at 25% of its exported size in AR
   'pistachio-sauce-bigne-with-ricotta': {
     folder: 'Pistachio-Sauce-Bigne-with-Ricotta',
     file:   'Pistachio-Sauce-Bigne-with-Ricotta',
-    scale:  0.25,
+    scale:  0.25,   // ← adjust this number to resize in AR
     orbit:  '30deg 70deg 110%',
   },
+  // Tiramisu ~12 cm × 8 cm × 6 cm tall
   'pinocchio-tiramisu': {
     folder: 'Pinocchio-Tiramisu',
     file:   'Pinocchio-Tiramisu',
-    scale:  2,
+    scale:  2,      // ← adjust this number to resize in AR
     orbit:  '20deg 65deg 110%',
   },
+  // Lasagne plate ~26 cm wide
   'cheesy-green-lasagne': {
     folder: 'Cheesy-Green-Lasagne',
     file:   'Cheesy-Green-Lasagne',
-    scale:  1,
+    scale:  1,      // ← adjust this number to resize in AR
     orbit:  '0deg 55deg 105%',
   },
+  // Calamari bowl ~20 cm wide
   'fried-calamari': {
     folder: 'Fried-Calamari',
     file:   'Fried-Calamari',
-    scale:  3,
+    scale:  3,      // ← adjust this number to resize in AR
     orbit:  '15deg 65deg 105%',
   },
   // ── END SCALE CONFIG ───────────────────────────────────────────────
@@ -913,12 +904,16 @@ function updateARButtonVisibility() {
   elArNotSupported.style.display = canAR ? 'none' : 'block';
 }
 
-/* ── FIX: Apply scale + orbit synchronously, before any async work.
-   This ensures the model-viewer element already has the correct scale
-   attribute SET before the GLB src is assigned and parsing begins.
-   Combined with reveal="manual", the model will never flash at the
-   wrong size — it stays hidden until dismissPoster() is called below. */
 function applyDishToModelViewer(d) {
+  /* ── FIX 1: ar-scale="fixed" + --ar-scale CSS var ──────────────────
+     ar-scale="fixed" is set on the element in HTML.
+     Setting --ar-scale here tells model-viewer exactly how big to
+     render the model in AR (as a multiplier on native metre size).
+     This is the ONLY combination that produces deterministic AR sizing.
+
+     The same `s` value also drives the 3D preview panel via the
+     `scale` attribute, so preview and AR are consistent.
+  ──────────────────────────────────────────────────────────────────── */
   const s = (d.scale ?? 1).toFixed(6);
 
   // 3D preview size
@@ -943,15 +938,6 @@ function openModal(id) {
   if (!d) return;
   currentDish = d;
 
-  /* ── FIX STEP 1: Apply scale SYNCHRONOUSLY right now, before any
-     async work. The model-viewer element will have the correct scale
-     attribute before src is ever assigned. ── */
-  applyDishToModelViewer(d);
-
-  /* ── FIX STEP 2: Reset reveal to "manual" so the model stays
-     invisible until we call dismissPoster() after confirming scale. ── */
-  elMV.setAttribute('reveal', 'manual');
-
   /* Populate text */
   document.getElementById('modal-name').textContent = d.name;
   document.getElementById('modal-jp').textContent   = d.jp||'';
@@ -974,20 +960,21 @@ function openModal(id) {
   showLoader();
 
   if (d.glbPath) {
+    /* FIX 2: Start GLB prefetch + module load the instant modal opens.
+       By the time the user reads the description and taps "View On Table",
+       the GLB will already be in the browser cache / parsed. */
     prefetchGlb(d.glbPath);
 
     ensureModelViewerLoaded().then(() => {
       if (currentDish?.id !== d.id) return; // user closed modal
 
-      /* Scale is already applied synchronously above — do NOT call
-         applyDishToModelViewer again here to avoid any flicker. */
+      applyDishToModelViewer(d);
 
       if (elMV.getAttribute('src') === d.glbPath) {
         /* Same GLB already loaded — trigger ready state immediately */
         onMVLoaded(d);
       } else {
-        /* New GLB — assign src and wait for load event.
-           Scale is already set, so the model parses at the right size. */
+        /* New GLB — assign src and wait for load event */
         elMV.setAttribute('src', d.glbPath);
       }
     });
@@ -1001,13 +988,6 @@ function openModal(id) {
 
 function onMVLoaded(d) {
   if (currentDish?.id !== d.id) return;
-
-  /* ── FIX STEP 3: Confirm scale is correct, then call dismissPoster()
-     to reveal the model atomically at the right size.
-     With reveal="manual", this is the ONLY moment the model becomes
-     visible — no flash, no wrong-size frame. ── */
-  applyDishToModelViewer(d);   // safety net re-confirm before reveal
-  elMV.dismissPoster();        // reveal now at correct size
 
   hideLoader();
   elPhoto.style.display = 'none';
@@ -1057,27 +1037,9 @@ elArLaunch.addEventListener('click', () => {
     }
 
     const launch = () => {
-
-  if (currentDish?.id !== d.id) return;
-
-  // Show instruction before AR opens
-  alert(
-    "📸 To capture your AR photo:\n\n" +
-    "Android: Press Power + Volume Down\n" +
-    "iPhone: Press Side Button + Volume Up"
-  );
-
-  try {
-
-    elMV.activateAR();
-
-  } catch(e) {
-
-    console.warn('activateAR:', e);
-
-  }
-
-};
+      if (currentDish?.id !== d.id) return;
+      try { elMV.activateAR(); } catch(e) { console.warn('activateAR:', e); }
+    };
 
     if (elMvWrapper.classList.contains('mv-visible')) {
       /* Model fully loaded — launch with zero delay */
