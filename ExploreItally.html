@@ -472,31 +472,48 @@ LANDMARKS.forEach((lm, idx) => {
            onerror="this.style.opacity='.1'">
 
       <model-viewer
-        id="mv-${idx}"
-        src="${glbPath}"
-        ${IS_IOS ? `ios-src="${usdzPath}"` : ''}
-        ar
-        ar-modes="${arModes}"
-        ar-placement="floor"
-        ar-scale="fixed"
-        xr-environment
-        camera-controls
-        touch-action="pan-y"
-        loading="${idx === 0 ? 'eager' : 'lazy'}"
-        reveal="auto"
-        environment-image="neutral"
-        shadow-intensity="1.2"
-        shadow-softness="0.8"
-        exposure="1.1"
-        camera-orbit="${lm.orbit}"
-        min-camera-orbit="auto auto 60%"
-        max-camera-orbit="auto auto 900%"
-        interaction-prompt="none"
-        scale="${s} ${s} ${s}"
-        style="--ar-scale:${s}">
-        <!-- Slot must exist for activateAR() to work on Android -->
-        <button slot="ar-button" aria-hidden="true" style="display:none"></button>
-      </model-viewer>
+  id="mv-${i}"
+
+  ar
+  <model-viewer
+  id="mv-${idx}"
+
+  src="${glbPath}"
+
+  ${IS_IOS ? `ios-src="${usdzPath}"` : ''}
+
+  ar
+  ar-modes="${arModes}"
+
+  ar-placement="floor"
+  ar-scale="fixed"
+
+  xr-environment
+
+  camera-controls
+  touch-action="pan-y pinch-zoom"
+
+  shadow-intensity="1"
+  shadow-softness="0.8"
+
+  environment-image="neutral"
+  exposure="1"
+
+  camera-orbit="${lm.orbit}"
+
+  interaction-prompt="none"
+
+  loading="eager"
+
+  reveal="auto"
+
+  style="width:100%;height:100%;background:transparent;">
+
+  <button slot="ar-button"></button>
+
+</model-viewer>
+
+</model-viewer>
 
       <div class="loading-overlay show" id="loader-${idx}">
         <div class="loader-ring"></div>
