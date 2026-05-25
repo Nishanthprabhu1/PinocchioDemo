@@ -9,22 +9,25 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 
-<!-- Load model-viewer IMMEDIATELY — not lazily — so AR is ready when user taps -->
+<!--
+  CRITICAL: Load model-viewer eagerly in <head> so the custom element
+  is registered before any card renders. This eliminates the "unknown
+  element" race that causes silent load failures.
+-->
 <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 
-<!-- Preload first card image (LCP) -->
+<!-- Preload first card poster (LCP) -->
 <link rel="preload" as="image" href="ExploreItally/amalficoast/amalficoast.png" fetchpriority="high">
 
 <style>
 :root {
-  --ink: #080604;
+  --ink:   #080604;
   --paper: #F0E8D5;
-  --gold: #B8973A;
+  --gold:  #B8973A;
   --gold2: #D4AE52;
   --ff-en: 'Cormorant Garamond', 'Palatino Linotype', Georgia, serif;
   --ff-ui: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
 }
-
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
@@ -108,7 +111,7 @@ body {
   background: radial-gradient(circle at center, #1b160c 0%, #080604 100%);
 }
 
-/* Poster fades out once 3D activates */
+/* Poster visible by default; fades when 3D activates */
 .model-poster {
   position: absolute;
   inset: 0;
@@ -119,12 +122,18 @@ body {
   transition: opacity .45s;
   pointer-events: none;
 }
-.model-wrap.active .model-poster {
-  opacity: 0;
-}
+.model-wrap.active .model-poster { opacity: 0; }
 
-/* model-viewer always takes full space;
-   pointer-events off until activated so scroll works */
+/*
+  model-viewer always occupies full space.
+  Pointer-events off until 3D is activated so horizontal card
+  scrolling isn't blocked.
+
+  CRITICAL:
+  ar-scale="fixed" is set on the HTML element.
+  --ar-scale CSS variable controls the real-world AR size.
+  Both are applied per-landmark in JS via applyARScale().
+*/
 model-viewer {
   position: absolute;
   inset: 0;
@@ -134,94 +143,17 @@ model-viewer {
   opacity: 0;
   pointer-events: none;
   transition: opacity .4s;
+  background: transparent;
   --poster-color: transparent;
 }
-model-viewer::part(default-progress-bar),
-model-viewer::part(default-ar-button) { display: none; }
+model-viewer::part(default-progress-bar) { display: none; }
+
+/* Suppress built-in AR button — we use our own */
+model-viewer > [slot="ar-button"] { display: none !important; }
 
 .model-wrap.active model-viewer {
   opacity: 1;
   pointer-events: auto;
-}
-
-/* ── Loading overlay ── */
-.loading-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 10;
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  background: rgba(8,6,4,.8);
-  pointer-events: none;
-}
-.loading-overlay.show { display: flex; }
-
-.loader-ring {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  border: 2px solid rgba(184,151,58,.15);
-  border-top-color: var(--gold2);
-  animation: spin .9s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.loader-bar-track {
-  width: 110px;
-  height: 3px;
-  background: rgba(184,151,58,.18);
-  border-radius: 10px;
-  overflow: hidden;
-}
-.loader-bar-fill {
-  height: 100%;
-  width: 0%;
-  background: var(--gold2);
-  transition: width .1s linear;
-}
-.loader-label {
-  font-size: 10px;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  color: var(--paper);
-}
-
-/* ── Error overlay ── */
-.error-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 11;
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  background: rgba(8,6,4,.75);
-}
-.error-overlay.show { display: flex; }
-.error-icon { font-size: 28px; opacity: .5; }
-.error-msg {
-  font-size: 9px;
-  letter-spacing: .16em;
-  text-transform: uppercase;
-  opacity: .55;
-  text-align: center;
-  padding: 0 20px;
-}
-.retry-btn {
-  margin-top: 4px;
-  background: rgba(184,151,58,.15);
-  border: 1px solid rgba(184,151,58,.4);
-  color: var(--gold2);
-  border-radius: 30px;
-  padding: 8px 20px;
-  font-size: 10px;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  cursor: pointer;
 }
 
 /* ── AR-ready badge ── */
@@ -241,10 +173,7 @@ model-viewer::part(default-ar-button) { display: none; }
   transition: opacity .35s, transform .35s;
   pointer-events: none;
 }
-.ar-badge.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
+.ar-badge.visible { opacity: 1; transform: translateY(0); }
 
 /* ── Pinch hint ── */
 .pinch-hint {
@@ -270,35 +199,99 @@ model-viewer::part(default-ar-button) { display: none; }
 }
 @keyframes fadeout { to { opacity: 0; } }
 
-/* ── Card info / buttons ── */
-.landmark-info {
-  padding: 16px;
-  background: #11100d;
+/* ── Loading overlay ── */
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: rgba(8,6,4,.8);
+  pointer-events: none;
 }
-.landmark-name {
-  font-family: var(--ff-en);
-  font-size: 28px;
-  margin-bottom: 4px;
+.loading-overlay.show { display: flex; }
+
+.loader-ring {
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  border: 2px solid rgba(184,151,58,.15);
+  border-top-color: var(--gold2);
+  animation: spin .9s linear infinite;
 }
-.landmark-city {
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loader-bar-track {
+  width: 110px; height: 3px;
+  background: rgba(184,151,58,.18);
+  border-radius: 10px; overflow: hidden;
+}
+.loader-bar-fill {
+  height: 100%; width: 0%;
+  background: var(--gold2);
+  transition: width .1s linear;
+}
+.loader-label {
   font-size: 10px;
   letter-spacing: .18em;
   text-transform: uppercase;
-  color: var(--gold);
-  margin-bottom: 14px;
+  color: var(--paper);
+}
+
+/* ── Error overlay ── */
+.error-overlay {
+  position: absolute; inset: 0; z-index: 11;
+  display: none; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 10px; background: rgba(8,6,4,.75);
+}
+.error-overlay.show { display: flex; }
+.error-icon { font-size: 28px; opacity: .5; }
+.error-msg {
+  font-size: 9px; letter-spacing: .16em;
+  text-transform: uppercase; opacity: .55;
+  text-align: center; padding: 0 20px;
+}
+.retry-btn {
+  background: rgba(184,151,58,.15);
+  border: 1px solid rgba(184,151,58,.4);
+  color: var(--gold2); border-radius: 30px;
+  padding: 8px 20px; font-size: 10px;
+  letter-spacing: .14em; text-transform: uppercase;
+  cursor: pointer;
+}
+
+/* ── AR not supported notice ── */
+.ar-no-support {
+  display: none;
+  position: absolute;
+  bottom: 12px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 8;
+  background: rgba(8,6,4,.85);
+  border: 1px solid rgba(184,151,58,.25);
+  padding: 7px 14px; border-radius: 30px;
+  font-size: 9px; letter-spacing: .12em;
+  color: rgba(212,174,82,.5);
+  white-space: nowrap; pointer-events: none;
+}
+
+/* ── Card info / buttons ── */
+.landmark-info { padding: 16px; background: #11100d; }
+.landmark-name { font-family: var(--ff-en); font-size: 28px; margin-bottom: 4px; }
+.landmark-city {
+  font-size: 10px; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--gold); margin-bottom: 14px;
 }
 .btn-row { display: flex; gap: 8px; }
 
 .action-btn {
-  border: none;
-  border-radius: 10px;
-  padding: 13px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  min-height: 46px;
-  cursor: pointer;
+  border: none; border-radius: 10px;
+  padding: 13px; font-size: 11px; font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase;
+  min-height: 46px; cursor: pointer;
   transition: opacity .2s, background .2s;
 }
 .action-btn:disabled { opacity: .4; cursor: not-allowed; }
@@ -310,34 +303,47 @@ model-viewer::part(default-ar-button) { display: none; }
 }
 .btn-3d.is-active { background: rgba(184,151,58,.28); }
 
+/*
+  AR button — gold gradient, same treatment as AR menu code.
+  Disabled state shown while model is still downloading.
+*/
 .btn-ar {
   flex: 1;
   background: linear-gradient(135deg, var(--gold), var(--gold2));
   color: #000;
+  position: relative;
+  overflow: hidden;
+}
+.btn-ar::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,.25);
+  opacity: 0;
+  transition: opacity .18s;
+}
+.btn-ar:hover::before { opacity: 1; }
+.btn-ar.loading {
+  background: rgba(184,151,58,.18);
+  color: var(--gold2);
+  border: 1px solid rgba(184,151,58,.3);
 }
 .btn-ar.error {
-  background: rgba(184,151,58,.12);
-  color: rgba(212,174,82,.45);
+  background: rgba(184,151,58,.1);
+  color: rgba(212,174,82,.4);
   border: 1px solid rgba(184,151,58,.2);
 }
 
 /* ── Scroll dots ── */
 .scroll-dots {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
+  display: flex; justify-content: center; gap: 8px;
   padding: 12px 0 max(env(safe-area-inset-bottom), 14px);
 }
 .dot {
-  width: 6px; height: 6px;
-  border-radius: 50%;
+  width: 6px; height: 6px; border-radius: 50%;
   background: rgba(184,151,58,.25);
   transition: transform .2s, background .2s;
 }
-.dot.active {
-  background: var(--gold2);
-  transform: scale(1.35);
-}
+.dot.active { background: var(--gold2); transform: scale(1.35); }
 </style>
 </head>
 <body>
@@ -350,15 +356,64 @@ model-viewer::part(default-ar-button) { display: none; }
 </header>
 
 <div class="explorer-grid" id="grid"></div>
-<div class="scroll-dots" id="dots"></div>
+<div class="scroll-dots"   id="dots"></div>
 
 <script>
-/* ─── Landmark data ─── */
+/* ─────────────────────────────────────────────────────────────────
+   LANDMARK CONFIG
+   ─────────────────────────────────────────────────────────────────
+
+   arScale
+   ───────
+   Controls real-world AR size. Works in tandem with ar-scale="fixed"
+   on the model-viewer element and the --ar-scale CSS variable.
+
+   Rule: arScale = (desired real-world metres) ÷ (model native metres)
+
+   Examples:
+     Model exported at 1 m, want 10 m tall colosseum → arScale = 10
+     Model exported at 0.01 m, want 5 m tall landmark → arScale = 500
+
+   Tune this number until AR looks right on your device.
+
+   orbit
+   ─────
+   Camera for the 3D preview only — does NOT affect AR.
+   Format: "thetaDeg phiDeg radiusPct"
+   ────────────────────────────────────────────────────────────────*/
 const LANDMARKS = [
-  { name: 'Amalfi Coast',          city: 'Italy', folder: 'amalficoast',           file: 'amalficoast'           },
-  { name: 'Colosseum',             city: 'Italy', folder: 'colosseum',              file: 'colosseum'             },
-  { name: 'Duomo Museum',          city: 'Italy', folder: 'duomo-museum',           file: 'duomo-museum'          },
-  { name: 'Leaning Tower of Pisa', city: 'Italy', folder: 'leaning-tower-of-pisa', file: 'leaning-tower-of-pisa' },
+  {
+    name:    'Amalfi Coast',
+    city:    'Italy',
+    folder:  'amalficoast',
+    file:    'amalficoast',
+    arScale: 1,               // ← tune for AR real-world size
+    orbit:   '30deg 65deg 110%',
+  },
+  {
+    name:    'Colosseum',
+    city:    'Italy',
+    folder:  'colosseum',
+    file:    'colosseum',
+    arScale: 1,
+    orbit:   '20deg 60deg 105%',
+  },
+  {
+    name:    'Duomo Museum',
+    city:    'Italy',
+    folder:  'duomo-museum',
+    file:    'duomo-museum',
+    arScale: 1,
+    orbit:   '0deg 55deg 105%',
+  },
+  {
+    name:    'Leaning Tower of Pisa',
+    city:    'Italy',
+    folder:  'leaning-tower-of-pisa',
+    file:    'leaning-tower-of-pisa',
+    arScale: 1,
+    orbit:   '15deg 60deg 110%',
+  },
 ];
 
 const IS_IOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
@@ -374,20 +429,39 @@ LANDMARKS.forEach((lm, idx) => {
   const usdzPath = `${base}.usdz`;
   const imgPath  = `${base}.png`;
 
-  /* ── Card shell ── */
+  /* Scale string for model-viewer scale attribute */
+  const s = (lm.arScale || 1).toFixed(6);
+
+  /* ar-modes:
+     webxr       → Chrome Android (WebXR Immersive AR)
+     scene-viewer→ Google Scene Viewer (Android fallback)
+     quick-look  → iOS AR Quick Look
+     Order matters — model-viewer tries them left-to-right.            */
+  const arModes = IS_IOS
+    ? 'quick-look webxr scene-viewer'
+    : 'webxr scene-viewer quick-look';
+
   const card = document.createElement('div');
   card.className   = 'landmark-card';
   card.dataset.idx = idx;
 
-  /* ── model-viewer:
-       • src set immediately — browser begins fetching the GLB right away
-       • loading="eager" on the first card, "lazy" on the rest
-       • reveal="auto" lets model-viewer show itself once loaded
-       • We still hide it visually via CSS until user taps 3D            */
-  const mvLoading = idx === 0 ? 'eager' : 'lazy';
-  const iosSrc    = IS_IOS ? `ios-src="${usdzPath}"` : '';
-  const arModes   = IS_IOS ? 'quick-look webxr' : 'scene-viewer webxr';
+  /*
+    KEY AR ATTRIBUTES on <model-viewer>:
+    ─────────────────────────────────────
+    ar-scale="fixed"
+      Forces model-viewer to use --ar-scale CSS variable for sizing
+      instead of auto-fitting. Without this, real-world size is random.
 
+    xr-environment
+      Improves floor/surface detection speed on WebXR.
+
+    ios-src
+      USDZ file used by AR Quick Look on iOS. Sized by --ar-scale too.
+
+    src set immediately (not deferred)
+      Browser starts fetching the GLB right away so it's in cache
+      by the time the user taps "View in AR".
+  */
   card.innerHTML = `
     <div class="model-wrap" id="wrap-${idx}">
 
@@ -395,29 +469,33 @@ LANDMARKS.forEach((lm, idx) => {
            src="${imgPath}" alt="${lm.name}"
            ${idx === 0 ? 'loading="eager" fetchpriority="high"' : 'loading="lazy"'}
            decoding="async"
-           onerror="this.style.opacity='.12'">
+           onerror="this.style.opacity='.1'">
 
       <model-viewer
         id="mv-${idx}"
         src="${glbPath}"
-        ${iosSrc}
+        ${IS_IOS ? `ios-src="${usdzPath}"` : ''}
         ar
         ar-modes="${arModes}"
         ar-placement="floor"
-        ar-scale="auto"
-        loading="${mvLoading}"
+        ar-scale="fixed"
+        xr-environment
+        camera-controls
+        touch-action="pan-y"
+        loading="${idx === 0 ? 'eager' : 'lazy'}"
         reveal="auto"
         environment-image="neutral"
         shadow-intensity="1.2"
         shadow-softness="0.8"
         exposure="1.1"
-        camera-controls
-        touch-action="pan-y"
-        min-camera-orbit="auto auto 8%"
+        camera-orbit="${lm.orbit}"
+        min-camera-orbit="auto auto 60%"
         max-camera-orbit="auto auto 900%"
-        field-of-view="18deg"
-        interpolation-decay="200"
-        interaction-prompt="none">
+        interaction-prompt="none"
+        scale="${s} ${s} ${s}"
+        style="--ar-scale:${s}">
+        <!-- Slot must exist for activateAR() to work on Android -->
+        <button slot="ar-button" aria-hidden="true" style="display:none"></button>
       </model-viewer>
 
       <div class="loading-overlay show" id="loader-${idx}">
@@ -434,8 +512,9 @@ LANDMARKS.forEach((lm, idx) => {
         <button class="retry-btn" id="retry-${idx}">↺ Retry</button>
       </div>
 
-      <div class="ar-badge"  id="badge-${idx}">✦ AR Ready</div>
+      <div class="ar-badge" id="badge-${idx}">✦ AR Ready</div>
       <div class="pinch-hint">⟺ Pinch Zoom · Drag Rotate · Scale in AR</div>
+      <div class="ar-no-support" id="nosup-${idx}">AR not available on this device</div>
     </div>
 
     <div class="landmark-info">
@@ -443,18 +522,18 @@ LANDMARKS.forEach((lm, idx) => {
       <div class="landmark-city">${lm.city}</div>
       <div class="btn-row">
         <button class="action-btn btn-3d" id="btn3d-${idx}">⬡ 3D</button>
-        <button class="action-btn btn-ar" id="btnar-${idx}" disabled>🪐 View in Real World</button>
+        <button class="action-btn btn-ar loading" id="btnar-${idx}" disabled>⏳ Loading…</button>
       </div>
     </div>`;
 
   grid.appendChild(card);
 
-  /* ── Dot ── */
+  /* Dot */
   const dot = document.createElement('div');
   dot.className = 'dot' + (idx === 0 ? ' active' : '');
   dotsEl.appendChild(dot);
 
-  /* ── Wire up events ── */
+  /* ── Wire events ── */
   const mv       = card.querySelector(`#mv-${idx}`);
   const loader   = card.querySelector(`#loader-${idx}`);
   const bar      = card.querySelector(`#bar-${idx}`);
@@ -463,41 +542,66 @@ LANDMARKS.forEach((lm, idx) => {
   const errmsg   = card.querySelector(`#errmsg-${idx}`);
   const retryBtn = card.querySelector(`#retry-${idx}`);
   const badge    = card.querySelector(`#badge-${idx}`);
+  const nosup    = card.querySelector(`#nosup-${idx}`);
   const wrap     = card.querySelector(`#wrap-${idx}`);
   const btn3d    = card.querySelector(`#btn3d-${idx}`);
   const btnAR    = card.querySelector(`#btnar-${idx}`);
 
   let modelReady = false;
 
-  /* Progress bar */
+  /* Progress */
   mv.addEventListener('progress', e => {
     const pct = Math.round((e.detail.totalProgress || 0) * 100);
     bar.style.width = pct + '%';
     lbl.textContent = `Loading ${pct}%`;
   });
 
-  /* Model loaded successfully */
+  /* Loaded — enable AR button */
   mv.addEventListener('load', () => {
     modelReady = true;
     loader.classList.remove('show');
     errBox.classList.remove('show');
     badge.classList.add('visible');
+
     btnAR.disabled = false;
-    btnAR.textContent = '🪐 View in Real World';
+    btnAR.classList.remove('loading', 'error');
+
+    /* Check if this device actually supports AR */
+    if (mv.canActivateAR) {
+      btnAR.textContent = '🪐 View in Real World';
+    } else {
+      btnAR.textContent = 'AR Unavailable';
+      btnAR.classList.add('error');
+      btnAR.disabled = true;
+      nosup.style.display = 'block';
+    }
   });
 
-  /* Load error */
+  /* Error */
   mv.addEventListener('error', () => {
     modelReady = false;
     loader.classList.remove('show');
-    /* Try to give a useful error message */
     fetch(glbPath, { method: 'HEAD' })
       .then(r => { errmsg.textContent = r.ok ? 'File may be corrupted' : `File not found (${r.status})`; })
-      .catch(() => { errmsg.textContent = 'Serve via localhost, not file://'; });
+      .catch(() => { errmsg.textContent = 'Serve via localhost — not file://'; });
     errBox.classList.add('show');
     btnAR.disabled = true;
+    btnAR.classList.remove('loading');
     btnAR.classList.add('error');
-    btnAR.textContent = 'Unavailable';
+    btnAR.textContent = '⚠ Unavailable';
+  });
+
+  /* AR status feedback */
+  mv.addEventListener('ar-status', e => {
+    const st = e.detail.status;
+    if (st === 'failed') {
+      btnAR.disabled = false;
+      btnAR.textContent = '⚠ AR Failed — Retry';
+    }
+    if (st === 'not-presenting') {
+      btnAR.disabled = false;
+      btnAR.textContent = '🪐 View in Real World';
+    }
   });
 
   /* Retry */
@@ -505,11 +609,11 @@ LANDMARKS.forEach((lm, idx) => {
     errBox.classList.remove('show');
     btnAR.disabled = true;
     btnAR.classList.remove('error');
-    btnAR.textContent = '🪐 View in Real World';
+    btnAR.classList.add('loading');
+    btnAR.textContent = '⏳ Loading…';
     loader.classList.add('show');
     bar.style.width = '0%';
     lbl.textContent = 'Loading model…';
-    /* Force reload by toggling src */
     const src = mv.getAttribute('src');
     mv.removeAttribute('src');
     requestAnimationFrame(() => mv.setAttribute('src', src));
@@ -520,13 +624,37 @@ LANDMARKS.forEach((lm, idx) => {
     const active = wrap.classList.toggle('active');
     btn3d.classList.toggle('is-active', active);
     btn3d.textContent = active ? '✕ 2D' : '⬡ 3D';
-    /* Block card scroll when 3D is active */
+    /* Block card horizontal swipe while 3D is active */
     wrap.ontouchstart = active ? e => e.stopPropagation() : null;
   });
 
-  /* AR launch — model is already loading, just activate */
+  /*
+    AR launch:
+    ──────────
+    Model is already loaded (src set at render time, not on tap).
+    Just call activateAR() — no async wait needed.
+
+    activateAR() triggers:
+      • WebXR Immersive AR on Chrome Android (ar-modes="webxr ...")
+      • Google Scene Viewer fallback on Android
+      • AR Quick Look on iOS via ios-src USDZ
+
+    ar-scale="fixed" + --ar-scale CSS var ensures the model appears
+    at the correct real-world size regardless of viewing distance.
+  */
   btnAR.addEventListener('click', () => {
-    if (modelReady) mv.activateAR();
+    if (!modelReady || btnAR.disabled) return;
+
+    if (!mv.canActivateAR) {
+      nosup.style.display = 'block';
+      return;
+    }
+
+    try {
+      mv.activateAR();
+    } catch (e) {
+      console.warn('activateAR error:', e);
+    }
   });
 });
 
@@ -542,8 +670,8 @@ grid.addEventListener('scroll', () => {
     const cx = grid.scrollLeft + grid.clientWidth / 2;
     let best = 0, bestDist = Infinity;
     grid.querySelectorAll('.landmark-card').forEach((c, ci) => {
-      const dist = Math.abs(c.offsetLeft + c.offsetWidth / 2 - cx);
-      if (dist < bestDist) { bestDist = dist; best = ci; }
+      const d = Math.abs(c.offsetLeft + c.offsetWidth / 2 - cx);
+      if (d < bestDist) { bestDist = d; best = ci; }
     });
     allDots.forEach((d, di) => d.classList.toggle('active', di === best));
   });
