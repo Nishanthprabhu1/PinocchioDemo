@@ -520,14 +520,13 @@ landmarks.forEach((l, i) => {
 
   <model-viewer
     id="mv-${i}"
-    src="${glbPath}"
     ${isIOS && l.hasUsdz ? `ios-src="${usdzPath}"` : ''}
 
     ar
     ar-modes="scene-viewer quick-look webxr"
     ar-placement="floor"
     ar-scale="fixed"
-
+    xr-environment
     camera-controls
     disable-pan
 
@@ -716,20 +715,36 @@ function wireCard(i) {
     if (!s.ready) {
       startLoad(i);
 
-      mv.addEventListener('load', () => {
+  arbtn.onclick = async () => {
 
-        const internalARButton =
-          mv.querySelector('[slot="ar-button"]');
-
-        if (internalARButton) {
-          internalARButton.click();
-        }
-
-      }, { once:true });
-
-      return;
-    }
+  // Show 3D first
+  if (!s.showing3D) {
+    activate3D(i);
   }
+
+  // Load model if needed
+  if (!s.ready) {
+    startLoad(i);
+
+    mv.addEventListener('load', async () => {
+      try {
+        await mv.activateAR();
+      } catch (err) {
+        console.error(err);
+      }
+    }, { once: true });
+
+    return;
+  }
+
+  // Open AR directly
+  try {
+    await mv.activateAR();
+  } catch (err) {
+    console.error(err);
+  }
+
+};
 
   const internalARButton =
     mv.querySelector('[slot="ar-button"]');
