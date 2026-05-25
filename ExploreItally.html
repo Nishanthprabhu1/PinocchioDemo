@@ -87,6 +87,7 @@ body {
   overflow-y: hidden;
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
+  touch-action: pan-x;
 }
 .explorer-grid::-webkit-scrollbar { display: none; }
 
@@ -481,7 +482,7 @@ LANDMARKS.forEach((lm, idx) => {
         ar-scale="fixed"
         xr-environment
         camera-controls
-        touch-action="pan-y"
+        touch-action="none"
         loading="${idx === 0 ? 'eager' : 'lazy'}"
         reveal="auto"
         environment-image="neutral"
@@ -624,8 +625,15 @@ LANDMARKS.forEach((lm, idx) => {
     const active = wrap.classList.toggle('active');
     btn3d.classList.toggle('is-active', active);
     btn3d.textContent = active ? '✕ 2D' : '⬡ 3D';
-    /* Block card horizontal swipe while 3D is active */
-    wrap.ontouchstart = active ? e => e.stopPropagation() : null;
+    if (active) {
+      wrap._th = e => e.stopPropagation();
+      wrap.addEventListener('touchstart', wrap._th, { passive: true });
+      wrap.addEventListener('touchmove',  wrap._th, { passive: true });
+    } else {
+      wrap.removeEventListener('touchstart', wrap._th);
+      wrap.removeEventListener('touchmove',  wrap._th);
+      wrap._th = null;
+    }
   });
 
   /*
