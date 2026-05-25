@@ -511,15 +511,24 @@
 
       <!-- Custom AR launch button -->
 <div class="mv-ar-btn-wrap" id="mv-ar-btn-wrap">
+  <div style="
+position:absolute;
+top:-55px;
+left:50%;
+transform:translateX(-50%);
+background:rgba(0,0,0,0.7);
+color:white;
+padding:8px 14px;
+font-size:12px;
+border-radius:8px;
+white-space:nowrap;
+">
+📸 Use phone screenshot in AR mode
+</div>
   <button class="modal-ar-launch-btn" id="modal-ar-launch-btn">
     ✦ View On Table
   </button>
-
-  <button class="modal-ar-launch-btn" id="capture-btn">
-    📸 Take Photo
-  </button>
 </div>
-
       <!-- Shown when device doesn't support AR -->
       <div class="ar-not-supported" id="ar-not-supported">
         AR not supported on this device — rotate to view in 3D
@@ -1049,9 +1058,27 @@ elArLaunch.addEventListener('click', () => {
     }
 
     const launch = () => {
-      if (currentDish?.id !== d.id) return;
-      try { elMV.activateAR(); } catch(e) { console.warn('activateAR:', e); }
-    };
+
+  if (currentDish?.id !== d.id) return;
+
+  // Show instruction before AR opens
+  alert(
+    "📸 To capture your AR photo:\n\n" +
+    "Android: Press Power + Volume Down\n" +
+    "iPhone: Press Side Button + Volume Up"
+  );
+
+  try {
+
+    elMV.activateAR();
+
+  } catch(e) {
+
+    console.warn('activateAR:', e);
+
+  }
+
+};
 
     if (elMvWrapper.classList.contains('mv-visible')) {
       /* Model fully loaded — launch with zero delay */
@@ -1144,58 +1171,7 @@ document.addEventListener("keydown", e => {
   }
 });
 /* ─────────────────────────────────────────────
-   SCREENSHOT FEATURE
-───────────────────────────────────────────── */
 
-const captureBtn = document.getElementById('capture-btn');
-
-captureBtn.addEventListener('click', async () => {
-
-  try {
-
-    const viewerWrap = document.getElementById('modal-viewer-wrap');
-
-    // Create canvas
-    const canvas = document.createElement('canvas');
-    canvas.width = viewerWrap.clientWidth;
-    canvas.height = viewerWrap.clientHeight;
-
-    const ctx = canvas.getContext('2d');
-
-    // Draw background image if exists
-    const bgImg = viewerWrap.querySelector('#modal-photo img');
-
-    if (bgImg && bgImg.complete) {
-      ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
-    }
-
-    // Capture model-viewer canvas
-    const mvCanvas = elMV.shadowRoot.querySelector('canvas');
-
-    if (mvCanvas) {
-      ctx.drawImage(mvCanvas, 0, 0, canvas.width, canvas.height);
-    }
-
-    // Add watermark
-    ctx.fillStyle = "rgba(255,255,255,0.85)";
-    ctx.font = "16px sans-serif";
-    ctx.fillText("PINOCCHIO AR MENU", 20, canvas.height - 20);
-
-    // Download image
-    const link = document.createElement('a');
-    link.download = `${currentDish.name}-AR-Photo.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-
-  } catch (err) {
-
-    console.error("Screenshot failed:", err);
-
-    alert("Screenshot not supported on this device.");
-
-  }
-
-});
 init();
 </script>
 </body>
