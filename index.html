@@ -3,16 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-  <title>Korean Cuisine — AR Menu</title>
-  <meta name="description" content="Interactive AR menu for Korean Cuisine — authentic Korean cuisine with 3D dish previews." />
+  <title>Italian Cuisine — AR Menu</title>
+  <meta name="description" content="Interactive AR menu for Italian Cuisine — authentic Italian cuisine with 3D dish previews." />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="dns-prefetch" href="https://unpkg.com" />
   <link rel="dns-prefetch" href="https://docs.google.com" />
 
-  <!-- ▼ CRITICAL: Load model-viewer eagerly so it's ready before any modal opens -->
-  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+  <link rel="preload"
+        href="https://docs.google.com/spreadsheets/d/e/2PACX-1vTEkmIGoRgD1rQNmDgmY3lvB7WBOg86iOHHrS0MJ6qQiReuDHsUyX3YV7KoWXxTbefyBUWPTHpvUOt3/pub?output=csv"
+        as="fetch" crossorigin="anonymous" />
 
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;600;700&family=Noto+Sans+JP:wght@300;400;500&family=Cinzel:wght@400;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
   <noscript>
@@ -282,7 +283,6 @@
     }
     @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: none; opacity: 1; } }
     @keyframes fadeIn  { from { opacity: 0; transform: scale(0.96) translateY(8px); } to { opacity: 1; transform: none; } }
-
     .modal-viewer-wrap {
       width: 100%; height: 300px;
       background: linear-gradient(160deg, #120c05 0%, #1e1208 50%, #120c05 100%);
@@ -294,10 +294,9 @@
       border: 1px solid rgba(196,160,48,0.18); pointer-events: none; z-index: 3;
     }
 
-    /* ▼ model-viewer always present in DOM, just hidden until ready */
     #mv-wrapper {
       position: absolute; inset: 0; z-index: 2;
-      opacity: 0; transition: opacity 0.2s ease;
+      opacity: 0; transition: opacity 0.35s ease;
       pointer-events: none;
     }
     #mv-wrapper.mv-visible {
@@ -307,8 +306,7 @@
 
     model-viewer {
       display: block; width: 100%; height: 300px; background: transparent;
-      --progress-bar-color: transparent; /* hide built-in progress bar — we use our own */
-      --progress-mask: transparent;
+      --progress-bar-color: #b8860b; --progress-mask: transparent;
       touch-action: pan-y pinch-zoom;
       position: absolute; inset: 0;
     }
@@ -343,12 +341,11 @@
     }
     .modal-close:hover { background: var(--crimson); border-color: var(--crimson); color: var(--washi); }
 
-    /* ▼ Loader only shown during actual network fetch */
     .mv-loader {
       position: absolute; inset: 0; z-index: 5;
       display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
       background: linear-gradient(160deg, #120c05 0%, #1e1208 50%, #120c05 100%);
-      transition: opacity 0.15s;
+      transition: opacity 0.3s;
     }
     .mv-loader.hidden { opacity: 0; pointer-events: none; }
     .mv-loader-ring {
@@ -409,15 +406,9 @@
       color: rgba(245,237,224,0.6); letter-spacing: 1px; white-space: nowrap;
       text-align: center;
     }
-
-    /* ▼ Hidden preload pool — model-viewer elements warming up GLBs in background */
-    #mv-preload-pool { display: none; }
   </style>
 </head>
 <body>
-
-<!-- ▼ Hidden pool: keeps model-viewer instances alive so GLBs stay GPU-warm -->
-<div id="mv-preload-pool" aria-hidden="true"></div>
 
 <header class="site-header">
   <div class="seigaiha-bg"></div>
@@ -435,10 +426,11 @@
     </select>
   </div>
   <div class="header-mon"></div>
-  <p class="header-kanji">Korean Cuisine</p>
-  <h1 class="header-title">HOMIGA</h1>
-  <span class="header-title-jp">Authentic Korean Cuisine</span>
+  <p class="header-kanji">Italian Cuisine</p>
+  <h1 class="header-title">PINOCCHIO</h1>
+  <span class="header-title-jp">by Chef Giuseppe</span>
   <div class="brush-divider"></div>
+  <p class="header-sub" id="ui-sub-tag">Authentic Italian Cuisine</p>
   <span class="ar-badge">
     <span class="ar-dot"></span>
     <span id="ui-ar-badge">Interactive 3D &amp; AR Preview</span>
@@ -477,11 +469,23 @@
         <div class="mv-loader-text">LOADING MODEL</div>
       </div>
 
-      <!-- Fallback photo shown while model loads -->
+      <!-- Photo fallback shown while model loads -->
       <div id="modal-photo" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;z-index:1;"></div>
 
+      <!-- model-viewer wrapped in opacity-controlled div -->
       <div id="mv-wrapper">
-        <!-- ▼ scale/min-scale/max-scale all set here so AR launches at correct size immediately -->
+        <!--
+        ┌─────────────────────────────────────────────────────────┐
+        │  reveal="manual"  ← CRITICAL: keeps model invisible     │
+        │  until dismissPoster() is called AFTER scale is set.    │
+        │  Prevents the flash at wrong/default scale.             │
+        │                                                          │
+        │  ar-scale="fixed"  ← forces model-viewer to use         │
+        │  --ar-scale CSS var for real-world AR size.             │
+        │                                                          │
+        │  xr-environment  ← improves floor detection speed       │
+        └─────────────────────────────────────────────────────────┘
+        -->
         <model-viewer id="main-mv"
           ar
           ar-modes="webxr scene-viewer quick-look"
@@ -495,7 +499,9 @@
           min-camera-orbit="auto auto 60%"
           max-camera-orbit="auto auto 140%"
           interaction-prompt="none"
-          loading="eager" reveal="auto">
+          loading="eager"
+          reveal="manual">
+          <!-- slot="ar-button" must exist in DOM for activateAR() on Android -->
           <button slot="ar-button" id="mv-ar-slot-btn" aria-hidden="true"></button>
         </model-viewer>
       </div>
@@ -503,10 +509,12 @@
       <div class="mv-ar-badge" id="mv-ar-badge">✦ AR Ready</div>
       <div class="scale-info"  id="scale-info">Actual portion size</div>
 
+      <!-- Custom AR launch button -->
       <div class="mv-ar-btn-wrap" id="mv-ar-btn-wrap">
         <button class="modal-ar-launch-btn" id="modal-ar-launch-btn">✦ View On Table</button>
       </div>
 
+      <!-- Shown when device doesn't support AR -->
       <div class="ar-not-supported" id="ar-not-supported">
         AR not supported on this device — rotate to view in 3D
       </div>
@@ -533,51 +541,87 @@
 <script>
 /* ─────────────────────────────────────────────────────────────────────
    CONFIGURATION
-   ───────────────────────────────────────────────────────────────────── */
+   ─────────────────────────────────────────────────────────────────────
+
+   LOCAL_ASSETS — per-dish 3D model config
+   ════════════════════════════════════════
+
+   scale
+   ─────
+   A multiplier applied to the model's native size.
+   It controls BOTH:
+     • the 3D preview panel size  (model-viewer `scale` attribute)
+     • the real-world AR size     (CSS `--ar-scale` variable, used
+                                   because ar-scale="fixed" is set)
+
+   HOW TO TUNE SCALE FOR AR:
+     The model's native size is whatever the 3D artist exported
+     (usually in metres). scale=1 means "as exported".
+
+     If your Tiramisu model was exported at 0.01 m (1 cm) but
+     should appear ~12 cm tall in AR, set scale = 12.
+
+     If your Bignè model was exported at 1 m (1 metre) but
+     should appear ~8 cm tall, set scale = 0.08.
+
+     Rule of thumb:
+       scale = (desired real-world size in metres) ÷ (model native size in metres)
+
+   orbit
+   ─────
+   Camera angle for the 3D preview panel only (does not affect AR).
+   Format: "thetaDeg phiDeg radiusPct"
+     theta = horizontal rotation (0 = front)
+     phi   = vertical angle (90 = top-down, 0 = side-on)
+     radius= zoom (100% = default fit, 80% = closer, 120% = further)
+
+   ─────────────────────────────────────────────────────────────────── */
 const ASSETS_BASE = '3d-model';
-const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTxvqvbnA4XcxM21xt7nOKv6aI1MonMepqeMbrrLxQEPzHH66DdM0yi1eRhcEMFn2fQaM_3scUGfJ_9/pub?gid=471728979&single=true&output=csv';
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTEkmIGoRgD1rQNmDgmY3lvB7WBOg86iOHHrS0MJ6qQiReuDHsUyX3YV7KoWXxTbefyBUWPTHpvUOt3/pub?output=csv';
 
 const LOCAL_ASSETS = {
-  'almond-crusted-crispy': {
-    folder: 'Almond-Crusted-Crispy',
-    file:   'Almond-Crusted-Crispy',
-    scale:  .3,
-    orbit:  '20deg 65deg 110%',
-  },
-  'cheesy_quiche': {
-    folder: 'Cheesy_quiche',
-    file:   'Cheesy_quiche',
-    scale:  .3,
-    orbit:  '0deg 60deg 105%',
-  },
-  'crispy_vegetable': {
-    folder: 'Crispy_vegetable',
-    file:   'Crispy_vegetable',
-    scale:  .3,
-    orbit:  '15deg 65deg 105%',
-  },
-  'mango-petal-tower': {
-    folder: 'Mango-Petal-Tower',
-    file:   'Mango-Petal-Tower',
-    scale:  .3,
+  // ── CHANGE SCALE HERE ──────────────────────────────────────────────
+  'pistachio-sauce-bigne-with-ricotta': {
+    folder: 'Pistachio-Sauce-Bigne-with-Ricotta',
+    file:   'Pistachio-Sauce-Bigne-with-Ricotta',
+    scale:  0.25,
     orbit:  '30deg 70deg 110%',
   },
+  'pinocchio-tiramisu': {
+    folder: 'Pinocchio-Tiramisu',
+    file:   'Pinocchio-Tiramisu',
+    scale:  2,
+    orbit:  '20deg 65deg 110%',
+  },
+  'cheesy-green-lasagne': {
+    folder: 'Cheesy-Green-Lasagne',
+    file:   'Cheesy-Green-Lasagne',
+    scale:  1,
+    orbit:  '0deg 55deg 105%',
+  },
+  'fried-calamari': {
+    folder: 'Fried-Calamari',
+    file:   'Fried-Calamari',
+    scale:  3,
+    orbit:  '15deg 65deg 105%',
+  },
+  // ── END SCALE CONFIG ───────────────────────────────────────────────
 };
 
 const EMOJI_MAP = {
-  'almond-crusted-crispy': '🌰',
-  'cheesy_quiche':         '🥧',
-  'crispy_vegetable':      '🥗',
-  'mango-petal-tower':     '🥭',
+  'pistachio-sauce-bigne-with-ricotta': '🍮',
+  'pinocchio-tiramisu':                 '🍰',
+  'cheesy-green-lasagne':               '🧀',
+  'fried-calamari':                     '🦑',
 };
 
 const I18N = {
-  en: { sub:'Authentic Korean Cuisine',    badge:'Interactive 3D & AR Preview', veg:'veg',         loading:'Loading...',           all:'All', starter:'Starters', main:'Main Course', dessert:'Desserts' },
-  it: { sub:'Autentica Cucina Coreana',    badge:'Anteprima Interattiva 3D & AR', veg:'vegetariano', loading:'Caricamento...',      all:'Tutti', starter:'Antipasti', main:'Portata Principale', dessert:'Dolci' },
-  kn: { sub:'ಅಧಿಕೃತ ಕೊರಿಯನ್ ಆಹಾರ',        badge:'3D ಮತ್ತು AR ಮುನ್ನೋಟ',           veg:'ಸಸ್ಯಾಹಾರಿ',   loading:'ಲೋಡ್ ಆಗುತ್ತಿದೆ...', all:'ಎಲ್ಲಾ', starter:'ಸ್ಟಾರ್ಟರ್', main:'ಮುಖ್ಯ ಕೋರ್ಸ್', dessert:'ಡೆಸರ್ಟ್' },
-  ta: { sub:'உண்மையான கொரிய உணவு',        badge:'3D மற்றும் AR மாதிரிக்காட்சி', veg:'சைவம்',        loading:'ஏற்றப்படுகிறது...', all:'அனைத்தும்', starter:'தொடக்க', main:'முதன்மை', dessert:'இனிப்பு' },
-  ml: { sub:'ആധികാരിക കൊറിയൻ വിഭവങ്ങൾ',  badge:'3D & AR പ്രിവ്യൂ',              veg:'വെജ്',         loading:'ലോഡ് ചെയ്യുന്നു...', all:'എല്ലാം', starter:'സ്റ്റാർട്ടർ', main:'മെയിൻ', dessert:'ഡെസേർട്ട്' },
-  te: { sub:'ప్రామాణిక కొరియన్ వంటకాలు',  badge:'3D & AR ప్రివ్యూ',              veg:'శాఖాహారం',    loading:'లోడ్ అవుతోంది...',   all:'అన్నీ', starter:'స్టార్టర్', main:'మెయిన్', dessert:'డెజర్ట్' },
+  en: { sub:'Authentic Italian Cuisine',    badge:'Interactive 3D & AR Preview', veg:'veg',         loading:'Loading...',           all:'All', starter:'Starters', main:'Main Course', dessert:'Desserts' },
+  it: { sub:'Autentica Cucina Italiana',    badge:'Anteprima Interattiva 3D & AR', veg:'vegetariano', loading:'Caricamento...',      all:'Tutti', starter:'Antipasti', main:'Portata Principale', dessert:'Dolci' },
+  kn: { sub:'ಅಧಿಕೃತ ಇಟಾಲಿಯನ್ ಆಹಾರ',        badge:'3D ಮತ್ತು AR ಮುನ್ನೋಟ',           veg:'ಸಸ್ಯಾಹಾರಿ',   loading:'ಲೋಡ್ ಆಗುತ್ತಿದೆ...', all:'ಎಲ್ಲಾ', starter:'ಸ್ಟಾರ್ಟರ್', main:'ಮುಖ್ಯ ಕೋರ್ಸ್', dessert:'ಡೆಸರ್ಟ್' },
+  ta: { sub:'உண்மையான இத்தாலிய உணவு',      badge:'3D மற்றும் AR மாதிரிக்காட்சி', veg:'சைவம்',        loading:'ஏற்றப்படுகிறது...', all:'அனைத்தும்', starter:'தொடக்க', main:'முதன்மை', dessert:'இனிப்பு' },
+  ml: { sub:'ആധികാരിക ഇറ്റാലിയൻ വിഭവങ്ങൾ',badge:'3D & AR പ്രിവ്യൂ',              veg:'വെജ്',         loading:'ലോഡ് ചെയ്യുന്നു...', all:'എല്ലാം', starter:'സ്റ്റാർട്ടർ', main:'മെയിൻ', dessert:'ഡെസേർട്ട്' },
+  te: { sub:'ప్రామాణిక ఇటాలియన్ వంటకాలు',  badge:'3D & AR ప్రివ్యూ',              veg:'శాఖాహారం',    loading:'లోడ్ అవుతోంది...',   all:'అన్నీ', starter:'స్టార్టర్', main:'మెయిన్', dessert:'డెజర్ట్' },
 };
 
 const CAT_LABELS = {
@@ -590,7 +634,7 @@ const CAT_LABELS = {
 /* ─────────────────────────────────────────────
    CSV FETCH with session cache
 ───────────────────────────────────────────── */
-const CACHE_KEY = 'menu_csv_v2';
+const CACHE_KEY = 'menu_csv_v1';
 const CACHE_TTL = 15 * 60 * 1000;
 
 function getCachedCSV() {
@@ -617,45 +661,40 @@ const csvPromise = (async () => {
 })();
 
 /* ─────────────────────────────────────────────
-   GLB PRELOAD POOL
-   We create hidden <model-viewer> elements for each known GLB.
-   This forces the browser to fetch + decode + GPU-upload the model
-   in the background, so when the modal opens it renders instantly.
+   model-viewer module — load once, track ready state
 ───────────────────────────────────────────── */
-const preloadPool = {}; // key → { mv, loaded }
-let poolReady = false;
+let mvModulePromise = null;
+let mvModuleReady = false;
 
-function buildPreloadPool() {
-  if (poolReady) return;
-  poolReady = true;
-  const container = document.getElementById('mv-preload-pool');
-
-  Object.entries(LOCAL_ASSETS).forEach(([key, entry]) => {
-    const base = `${ASSETS_BASE}/${entry.folder}/${entry.file}`;
-    const glb  = `${base}.glb`;
-    const s    = (entry.scale ?? 1).toFixed(6);
-
-    const mv = document.createElement('model-viewer');
-    mv.setAttribute('src', glb);
-    mv.setAttribute('loading', 'eager');
-    mv.setAttribute('reveal', 'auto');
-    // ▼ Set the exact scale NOW so the model is decoded at this transform
-    mv.setAttribute('scale', `${s} ${s} ${s}`);
-    mv.setAttribute('camera-orbit', entry.orbit ?? '0deg 75deg 105%');
-    mv.style.cssText = 'position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;';
-
-    preloadPool[key] = { mv, loaded: false };
-    mv.addEventListener('load', () => { preloadPool[key].loaded = true; }, { once: true });
-    container.appendChild(mv);
-  });
+function ensureModelViewerLoaded() {
+  if (!mvModulePromise) {
+    mvModulePromise = import('https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js')
+      .then(() => { mvModuleReady = true; });
+  }
+  return mvModulePromise;
 }
 
-// Start preloading immediately after page renders
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', buildPreloadPool);
-} else {
-  // Use idle callback to not block main thread during initial render
-  (window.requestIdleCallback || (cb => setTimeout(cb, 300)))(buildPreloadPool);
+/* GLB prefetch — queues the binary download in the browser cache */
+const glbPrefetched = new Set();
+function prefetchGlb(glbPath) {
+  if (!glbPath || glbPrefetched.has(glbPath)) return;
+  glbPrefetched.add(glbPath);
+  const link = document.createElement('link');
+  link.rel = 'prefetch'; link.href = glbPath;
+  link.as = 'fetch'; link.crossOrigin = 'anonymous';
+  document.head.appendChild(link);
+}
+
+function preloadAboveFoldPosters(dishes, count = 4) {
+  const idle = window.requestIdleCallback || (cb => setTimeout(cb, 200));
+  idle(() => {
+    dishes.slice(0, count).forEach(d => {
+      if (!d.posterPath) return;
+      const link = document.createElement('link');
+      link.rel = 'preload'; link.as = 'image'; link.href = d.posterPath;
+      document.head.appendChild(link);
+    });
+  });
 }
 
 /* ─────────────────────────────────────────────
@@ -665,10 +704,9 @@ function normalizeKey(str) {
   return (str||'').toLowerCase().replace(/\s+/g,'-').trim();
 }
 function getLocalAssets(dishName) {
-  const keyDirect = (dishName||'').toLowerCase().trim();
-  const keyNorm   = normalizeKey(dishName);
-  const entry     = LOCAL_ASSETS[keyDirect] || LOCAL_ASSETS[keyNorm];
-  if (!entry) return { posterPath:'', glbPath:'', usdzPath:'', scale:1, orbit:'0deg 75deg 105%', key:'' };
+  const key   = normalizeKey(dishName);
+  const entry = LOCAL_ASSETS[key];
+  if (!entry) return { posterPath:'', glbPath:'', usdzPath:'', scale:0.05, orbit:'0deg 75deg 105%' };
   const base = `${ASSETS_BASE}/${entry.folder}/${entry.file}`;
   return {
     posterPath: `${base}.png`,
@@ -676,7 +714,6 @@ function getLocalAssets(dishName) {
     usdzPath:   `${base}.usdz`,
     scale:      entry.scale,
     orbit:      entry.orbit ?? '0deg 75deg 105%',
-    key:        keyDirect,
   };
 }
 
@@ -714,10 +751,7 @@ function rowToDish(row) {
   const sfx = {it:'_it',kn:'_kn',ta:'_ta',ml:'_ml',te:'_te',hi:'_hi'}[currentLang]||'';
   const desc = row[`description${sfx}`] || row['description'] || '';
   const name = row[`name${sfx}`]        || row['name']        || '';
-  const rawName = row['name'] || '';
-  const local = getLocalAssets(rawName);
-  const keyDirect = rawName.toLowerCase().trim();
-  const keyNorm   = normalizeKey(rawName);
+  const local = getLocalAssets(row['name']);
   return {
     id: row['id']||'', name,
     category: (row['category']||'other').toLowerCase(),
@@ -726,8 +760,7 @@ function rowToDish(row) {
     glbPath: local.glbPath, usdzPath: local.usdzPath,
     posterPath: local.posterPath, scale: local.scale,
     orbit: local.orbit,
-    assetKey: local.key,
-    emoji: EMOJI_MAP[keyDirect] || EMOJI_MAP[keyNorm] || '🍽️',
+    emoji: EMOJI_MAP[normalizeKey(row['name'])]||'🍽️',
   };
 }
 
@@ -815,6 +848,9 @@ function renderItems() {
     container.querySelectorAll('.menu-card').forEach(card => {
       const d = allDishes.find(x=>x.id===card.dataset.id);
       if (!d) return;
+      const doPrefetch = () => { prefetchGlb(d.glbPath); ensureModelViewerLoaded(); };
+      card.addEventListener('mouseenter', doPrefetch, { once:true, passive:true });
+      card.addEventListener('touchstart',  doPrefetch, { once:true, passive:true });
       card.addEventListener('click', ()=>openModal(card.dataset.id));
       card.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') openModal(card.dataset.id); });
     });
@@ -825,7 +861,7 @@ function renderItems() {
 }
 
 /* ─────────────────────────────────────────────
-   MODAL — instant-scale AR logic
+   MODAL
 ───────────────────────────────────────────── */
 const elMV            = document.getElementById('main-mv');
 const elMvWrapper     = document.getElementById('mv-wrapper');
@@ -863,19 +899,24 @@ function updateARButtonVisibility() {
   elArNotSupported.style.display = canAR ? 'none' : 'block';
 }
 
-/**
- * Apply scale + orbit to model-viewer.
- * CRITICAL: We set scale BEFORE setting src so model-viewer knows the
- * target transform from the moment it starts decoding. This prevents
- * the "loads at default size then snaps" artifact.
- */
-function applyScaleToMV(d) {
+/* ── FIX: Apply scale + orbit synchronously, before any async work.
+   This ensures the model-viewer element already has the correct scale
+   attribute SET before the GLB src is assigned and parsing begins.
+   Combined with reveal="manual", the model will never flash at the
+   wrong size — it stays hidden until dismissPoster() is called below. */
+function applyDishToModelViewer(d) {
   const s = (d.scale ?? 1).toFixed(6);
-  // Set all three scale attributes together so there's no intermediate state
-  elMV.setAttribute('scale',     `${s} ${s} ${s}`);
-  elMV.setAttribute('min-scale', `${s} ${s} ${s}`);
-  elMV.setAttribute('max-scale', `${s} ${s} ${s}`);
+
+  // 3D preview size
+  elMV.setAttribute('scale', `${s} ${s} ${s}`);
+
+  // AR real-world size — ar-scale="fixed" reads this CSS var
+  elMV.style.setProperty('--ar-scale', s);
+
+  // Per-dish camera angle for the 3D preview
   elMV.setAttribute('camera-orbit', d.orbit ?? '0deg 75deg 105%');
+
+  // iOS USDZ
   if (isIOS && d.usdzPath) {
     elMV.setAttribute('ios-src', d.usdzPath);
   } else {
@@ -888,7 +929,16 @@ function openModal(id) {
   if (!d) return;
   currentDish = d;
 
-  // Populate text fields
+  /* ── FIX STEP 1: Apply scale SYNCHRONOUSLY right now, before any
+     async work. The model-viewer element will have the correct scale
+     attribute before src is ever assigned. ── */
+  applyDishToModelViewer(d);
+
+  /* ── FIX STEP 2: Reset reveal to "manual" so the model stays
+     invisible until we call dismissPoster() after confirming scale. ── */
+  elMV.setAttribute('reveal', 'manual');
+
+  /* Populate text */
   document.getElementById('modal-name').textContent = d.name;
   document.getElementById('modal-jp').textContent   = d.jp||'';
   document.getElementById('modal-desc').textContent = d.desc;
@@ -897,7 +947,7 @@ function openModal(id) {
   document.getElementById('modal-tags').innerHTML   = tagHTML(d);
   document.getElementById('modal-tags2').innerHTML  = tagHTML(d);
 
-  // Reset viewer state
+  /* Reset viewer UI */
   hideMV();
   elArBadge.classList.remove('visible');
   elScaleInfo.textContent = '';
@@ -907,35 +957,26 @@ function openModal(id) {
   elArLaunch.textContent = '✦ View On Table';
 
   setPhoto(d);
+  showLoader();
 
   if (d.glbPath) {
-    // ▼ Step 1: Apply correct scale BEFORE loading src
-    applyScaleToMV(d);
+    prefetchGlb(d.glbPath);
 
-    const poolEntry = preloadPool[d.assetKey];
+    ensureModelViewerLoaded().then(() => {
+      if (currentDish?.id !== d.id) return; // user closed modal
 
-    if (poolEntry && poolEntry.loaded) {
-      // ── FAST PATH: model already in GPU cache ──
-      // Swap src to the pool's pre-warmed GLB — browser serves from cache instantly
-      if (elMV.getAttribute('src') !== d.glbPath) {
-        showLoader(); // brief flash while WebGL context transfers
-        elMV.setAttribute('src', d.glbPath);
+      /* Scale is already applied synchronously above — do NOT call
+         applyDishToModelViewer again here to avoid any flicker. */
+
+      if (elMV.getAttribute('src') === d.glbPath) {
+        /* Same GLB already loaded — trigger ready state immediately */
+        onMVLoaded(d);
       } else {
-        // Same src already loaded: show immediately, no loader needed
-        hideLoader();
-        elPhoto.style.display = 'none';
-        showMV();
-        elArBadge.classList.add('visible');
-        elScaleInfo.textContent = 'Actual portion size';
-        updateARButtonVisibility();
-      }
-    } else {
-      // ── NORMAL PATH: first open, fetch from network ──
-      showLoader();
-      if (elMV.getAttribute('src') !== d.glbPath) {
+        /* New GLB — assign src and wait for load event.
+           Scale is already set, so the model parses at the right size. */
         elMV.setAttribute('src', d.glbPath);
       }
-    }
+    });
   } else {
     hideLoader();
   }
@@ -946,6 +987,14 @@ function openModal(id) {
 
 function onMVLoaded(d) {
   if (currentDish?.id !== d.id) return;
+
+  /* ── FIX STEP 3: Confirm scale is correct, then call dismissPoster()
+     to reveal the model atomically at the right size.
+     With reveal="manual", this is the ONLY moment the model becomes
+     visible — no flash, no wrong-size frame. ── */
+  applyDishToModelViewer(d);   // safety net re-confirm before reveal
+  elMV.dismissPoster();        // reveal now at correct size
+
   hideLoader();
   elPhoto.style.display = 'none';
   showMV();
@@ -953,6 +1002,8 @@ function onMVLoaded(d) {
   elScaleInfo.textContent = 'Actual portion size';
   updateARButtonVisibility();
 }
+
+/* ─── model-viewer events ─── */
 
 elMV.addEventListener('load', () => {
   if (currentDish) onMVLoaded(currentDish);
@@ -977,38 +1028,43 @@ elMV.addEventListener('ar-status', e => {
   }
 });
 
+/* AR launch button */
 elArLaunch.addEventListener('click', () => {
   if (elArLaunch.disabled || !currentDish) return;
   const d = currentDish;
 
-  if (!elMV.canActivateAR) {
-    elArNotSupported.style.display = 'block';
-    elArBtnWrap.style.display = 'none';
-    return;
-  }
-
-  const launch = () => {
+  ensureModelViewerLoaded().then(() => {
     if (currentDish?.id !== d.id) return;
-    // ▼ Re-apply scale just before AR activation — guarantees correct size in AR session
-    applyScaleToMV(d);
-    try { elMV.activateAR(); } catch(err) { console.warn('activateAR:', err); }
-  };
 
-  if (elMvWrapper.classList.contains('mv-visible')) {
-    launch();
-  } else {
-    elArLaunch.disabled = true;
-    elArLaunch.textContent = '⏳ Loading…';
-    elMV.addEventListener('load', () => {
-      elArLaunch.disabled = false;
-      elArLaunch.textContent = '✦ View On Table';
+    if (!elMV.canActivateAR) {
+      elArNotSupported.style.display = 'block';
+      elArBtnWrap.style.display = 'none';
+      return;
+    }
+
+    const launch = () => {
+      if (currentDish?.id !== d.id) return;
+      try { elMV.activateAR(); } catch(e) { console.warn('activateAR:', e); }
+    };
+
+    if (elMvWrapper.classList.contains('mv-visible')) {
+      /* Model fully loaded — launch with zero delay */
       launch();
-    }, { once: true });
-  }
+    } else {
+      /* Model still parsing — show indicator, launch on load */
+      elArLaunch.disabled = true;
+      elArLaunch.textContent = '⏳ Loading…';
+      elMV.addEventListener('load', () => {
+        elArLaunch.disabled = false;
+        elArLaunch.textContent = '✦ View On Table';
+        launch();
+      }, { once: true });
+    }
+  });
 });
 
-function safePause() { try { if (typeof elMV.pause === 'function') elMV.pause(); } catch{} }
-function safePlay()  { try { if (typeof elMV.play  === 'function') elMV.play();  } catch{} }
+function safePause() { if (mvModuleReady && typeof elMV.pause === 'function') elMV.pause(); }
+function safePlay()  { if (mvModuleReady && typeof elMV.play  === 'function') elMV.play();  }
 
 function closeModal() {
   document.getElementById('modal-overlay').classList.remove('open');
@@ -1016,6 +1072,10 @@ function closeModal() {
   currentDish = null;
   safePause();
 }
+
+document.getElementById('modal-overlay').addEventListener('transitionend', () => {
+  if (document.getElementById('modal-overlay').classList.contains('open')) safePlay();
+});
 
 document.addEventListener('visibilitychange', () => {
   document.hidden ? safePause() : safePlay();
@@ -1030,6 +1090,7 @@ document.addEventListener('keydown', e => { if (e.key==='Escape') closeModal(); 
 document.getElementById('lang-select').addEventListener('change', e => {
   currentLang = e.target.value;
   const t = I18N[currentLang]||I18N.en;
+  document.getElementById('ui-sub-tag').textContent  = t.sub;
   document.getElementById('ui-ar-badge').textContent = t.badge;
   allDishes = rawRows.map(rowToDish).filter(d=>d.name);
   renderTabs(); renderItems();
@@ -1046,6 +1107,7 @@ async function init() {
     allDishes  = rawRows.map(rowToDish).filter(d=>d.name);
     if (!allDishes.length) throw new Error('No dishes found.');
 
+    preloadAboveFoldPosters(allDishes);
     renderTabs();
     renderItems();
 
