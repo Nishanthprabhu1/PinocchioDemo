@@ -538,333 +538,11 @@
   <span style="opacity:0.5;font-size:10px;">AR requires a compatible mobile device · Model size reflects actual portion</span>
 </footer>
 
-<script>
-/* ─────────────────────────────────────────────────────────────────────
-   CONFIGURATION
-   ─────────────────────────────────────────────────────────────────────
-
-   LOCAL_ASSETS — per-dish 3D model config
-   ════════════════════════════════════════
-
-   scale
-   ─────
-   A multiplier applied to the model's native size.
-   It controls BOTH:
-     • the 3D preview panel size  (model-viewer `scale` attribute)
-     • the real-world AR size     (CSS `--ar-scale` variable, used
-                                   because ar-scale="fixed" is set)
-
-   HOW TO TUNE SCALE FOR AR:
-     The model's native size is whatever the 3D artist exported
-     (usually in metres). scale=1 means "as exported".
-
-     If your Tiramisu model was exported at 0.01 m (1 cm) but
-     should appear ~12 cm tall in AR, set scale = 12.
-
-     If your Bignè model was exported at 1 m (1 metre) but
-     should appear ~8 cm tall, set scale = 0.08.
-
-     Rule of thumb:
-       scale = (desired real-world size in metres) ÷ (model native size in metres)
-
-   orbit
-   ─────
-   Camera angle for the 3D preview panel only (does not affect AR).
-   Format: "thetaDeg phiDeg radiusPct"
-     theta = horizontal rotation (0 = front)
-     phi   = vertical angle (90 = top-down, 0 = side-on)
-     radius= zoom (100% = default fit, 80% = closer, 120% = further)
-
-   ─────────────────────────────────────────────────────────────────── */
-const ASSETS_BASE = '3d-model';
-const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTEkmIGoRgD1rQNmDgmY3lvB7WBOg86iOHHrS0MJ6qQiReuDHsUyX3YV7KoWXxTbefyBUWPTHpvUOt3/pub?output=csv';
-
-const LOCAL_ASSETS = {
-  // ── CHANGE SCALE HERE ──────────────────────────────────────────────
-  'pistachio-sauce-bigne-with-ricotta': {
-    folder: 'Pistachio-Sauce-Bigne-with-Ricotta',
-    file:   'Pistachio-Sauce-Bigne-with-Ricotta',
-    scale:  0.25,
-    orbit:  '30deg 70deg 110%',
-  },
-  'pinocchio-tiramisu': {
-    folder: 'Pinocchio-Tiramisu',
-    file:   'Pinocchio-Tiramisu',
-    scale:  2,
-    orbit:  '20deg 65deg 110%',
-  },
-  'cheesy-green-lasagne': {
-    folder: 'Cheesy-Green-Lasagne',
-    file:   'Cheesy-Green-Lasagne',
-    scale:  1,
-    orbit:  '0deg 55deg 105%',
-  },
-  'fried-calamari': {
-    folder: 'Fried-Calamari',
-    file:   'Fried-Calamari',
-    scale:  3,
-    orbit:  '15deg 65deg 105%',
-  },
-  // ── END SCALE CONFIG ───────────────────────────────────────────────
-};
-
-const EMOJI_MAP = {
-  'pistachio-sauce-bigne-with-ricotta': '🍮',
-  'pinocchio-tiramisu':                 '🍰',
-  'cheesy-green-lasagne':               '🧀',
-  'fried-calamari':                     '🦑',
-};
-
-const I18N = {
-  en: { sub:'Authentic Italian Cuisine',    badge:'Interactive 3D & AR Preview', veg:'veg',         loading:'Loading...',           all:'All', starter:'Starters', main:'Main Course', dessert:'Desserts' },
-  it: { sub:'Autentica Cucina Italiana',    badge:'Anteprima Interattiva 3D & AR', veg:'vegetariano', loading:'Caricamento...',      all:'Tutti', starter:'Antipasti', main:'Portata Principale', dessert:'Dolci' },
-  kn: { sub:'ಅಧಿಕೃತ ಇಟಾಲಿಯನ್ ಆಹಾರ',        badge:'3D ಮತ್ತು AR ಮುನ್ನೋಟ',           veg:'ಸಸ್ಯಾಹಾರಿ',   loading:'ಲೋಡ್ ಆಗುತ್ತಿದೆ...', all:'ಎಲ್ಲಾ', starter:'ಸ್ಟಾರ್ಟರ್', main:'ಮುಖ್ಯ ಕೋರ್ಸ್', dessert:'ಡೆಸರ್ಟ್' },
-  ta: { sub:'உண்மையான இத்தாலிய உணவு',      badge:'3D மற்றும் AR மாதிரிக்காட்சி', veg:'சைவம்',        loading:'ஏற்றப்படுகிறது...', all:'அனைத்தும்', starter:'தொடக்க', main:'முதன்மை', dessert:'இனிப்பு' },
-  ml: { sub:'ആധികാരിക ഇറ്റാലിയൻ വിഭവങ്ങൾ',badge:'3D & AR പ്രിവ്യൂ',              veg:'വെജ്',         loading:'ലോഡ് ചെയ്യുന്നു...', all:'എല്ലാം', starter:'സ്റ്റാർട്ടർ', main:'മെയിൻ', dessert:'ഡെസേർട്ട്' },
-  te: { sub:'ప్రామాణిక ఇటాలియన్ వంటకాలు',  badge:'3D & AR ప్రివ్యూ',              veg:'శాఖాహారం',    loading:'లోడ్ అవుతోంది...',   all:'అన్నీ', starter:'స్టార్టర్', main:'మెయిన్', dessert:'డెజర్ట్' },
-};
-
-const CAT_LABELS = {
-  all:          { en:'All',         it:'Tutti' },
-  starter:      { en:'Starters',    it:'Antipasti' },
-  dessert:      { en:'Desserts',    it:'Dolci' },
-  'main-course':{ en:'Main Course', it:'Portata Principale' },
-};
-
-/* ─────────────────────────────────────────────
-   CSV FETCH with session cache
+<script> /* ─────────────────────────────────────────────
+   MODAL — DYNAMIC RE-CREATION (NO-FLICKER FIX)
 ───────────────────────────────────────────── */
-const CACHE_KEY = 'menu_csv_v1';
-const CACHE_TTL = 15 * 60 * 1000;
-
-function getCachedCSV() {
-  try {
-    const raw = sessionStorage.getItem(CACHE_KEY);
-    if (!raw) return null;
-    const { ts, text } = JSON.parse(raw);
-    if (Date.now() - ts > CACHE_TTL) { sessionStorage.removeItem(CACHE_KEY); return null; }
-    return text;
-  } catch { return null; }
-}
-function setCachedCSV(text) {
-  try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), text })); } catch {}
-}
-
-const csvPromise = (async () => {
-  const cached = getCachedCSV();
-  if (cached) return cached;
-  const res = await fetch(CSV_URL);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const text = await res.text();
-  setCachedCSV(text);
-  return text;
-})();
-
-/* ─────────────────────────────────────────────
-   model-viewer module — load once, track ready state
-───────────────────────────────────────────── */
-let mvModulePromise = null;
-let mvModuleReady = false;
-
-function ensureModelViewerLoaded() {
-  if (!mvModulePromise) {
-    mvModulePromise = import('https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js')
-      .then(() => { mvModuleReady = true; });
-  }
-  return mvModulePromise;
-}
-
-/* GLB prefetch — queues the binary download in the browser cache */
-const glbPrefetched = new Set();
-function prefetchGlb(glbPath) {
-  if (!glbPath || glbPrefetched.has(glbPath)) return;
-  glbPrefetched.add(glbPath);
-  const link = document.createElement('link');
-  link.rel = 'prefetch'; link.href = glbPath;
-  link.as = 'fetch'; link.crossOrigin = 'anonymous';
-  document.head.appendChild(link);
-}
-
-function preloadAboveFoldPosters(dishes, count = 4) {
-  const idle = window.requestIdleCallback || (cb => setTimeout(cb, 200));
-  idle(() => {
-    dishes.slice(0, count).forEach(d => {
-      if (!d.posterPath) return;
-      const link = document.createElement('link');
-      link.rel = 'preload'; link.as = 'image'; link.href = d.posterPath;
-      document.head.appendChild(link);
-    });
-  });
-}
-
-/* ─────────────────────────────────────────────
-   HELPERS
-───────────────────────────────────────────── */
-function normalizeKey(str) {
-  return (str||'').toLowerCase().replace(/\s+/g,'-').trim();
-}
-function getLocalAssets(dishName) {
-  const key   = normalizeKey(dishName);
-  const entry = LOCAL_ASSETS[key];
-  if (!entry) return { posterPath:'', glbPath:'', usdzPath:'', scale:0.05, orbit:'0deg 75deg 105%' };
-  const base = `${ASSETS_BASE}/${entry.folder}/${entry.file}`;
-  return {
-    posterPath: `${base}.png`,
-    glbPath:    `${base}.glb`,
-    usdzPath:   `${base}.usdz`,
-    scale:      entry.scale,
-    orbit:      entry.orbit ?? '0deg 75deg 105%',
-  };
-}
-
-function parseCSV(text) {
-  const lines = text.trim().split('\n');
-  if (lines.length < 2) return [];
-  const headers = splitLine(lines[0]).map(h => h.trim().toLowerCase());
-  return lines.slice(1).map(line => {
-    const vals = splitLine(line), obj = {};
-    headers.forEach((h, i) => { obj[h] = (vals[i]||'').trim(); });
-    return obj;
-  });
-}
-function splitLine(line) {
-  const result=[]; let cur='', inQ=false;
-  for (let i=0; i<line.length; i++) {
-    const ch=line[i];
-    if(ch==='"'&&!inQ){inQ=true;continue;}
-    if(ch==='"'&&inQ){if(line[i+1]==='"'){cur+='"';i++;}else{inQ=false;}continue;}
-    if(ch===','&&!inQ){result.push(cur);cur='';continue;}
-    cur+=ch;
-  }
-  result.push(cur); return result;
-}
-
-/* ─────────────────────────────────────────────
-   STATE
-───────────────────────────────────────────── */
-let allDishes=[], rawRows=[], activeCategory='all', currentLang='en';
-const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
-              (navigator.platform==='MacIntel' && navigator.maxTouchPoints > 1);
-
-function rowToDish(row) {
-  const truthy = v => ['true','yes','1'].includes((v||'').toLowerCase());
-  const sfx = {it:'_it',kn:'_kn',ta:'_ta',ml:'_ml',te:'_te',hi:'_hi'}[currentLang]||'';
-  const desc = row[`description${sfx}`] || row['description'] || '';
-  const name = row[`name${sfx}`]        || row['name']        || '';
-  const local = getLocalAssets(row['name']);
-  return {
-    id: row['id']||'', name,
-    category: (row['category']||'other').toLowerCase(),
-    desc, price: parseInt(row['price']||'0',10),
-    veg: truthy(row['veg']), available: truthy(row['available']),
-    glbPath: local.glbPath, usdzPath: local.usdzPath,
-    posterPath: local.posterPath, scale: local.scale,
-    orbit: local.orbit,
-    emoji: EMOJI_MAP[normalizeKey(row['name'])]||'🍽️',
-  };
-}
-
-/* ─────────────────────────────────────────────
-   RENDER
-───────────────────────────────────────────── */
-function tagHTML(d) {
-  const t = I18N[currentLang]||I18N.en;
-  return [
-    d.veg   ? `<span class="tag tag-veg">🌿 ${t.veg}</span>` : '',
-    d.isNew ? `<span class="tag tag-new">新 new</span>` : '',
-    d.dotd  ? `<span class="tag tag-dotd">★ chef's pick</span>` : '',
-  ].join('');
-}
-function catLabel(cat) {
-  const map = CAT_LABELS[cat];
-  return map ? (map[currentLang]||map.en) : (cat.charAt(0).toUpperCase()+cat.slice(1));
-}
-
-function renderTabs() {
-  const cats = ['all','starter','main-course','dessert'];
-  const wrap = document.getElementById('tabs-inner');
-  wrap.innerHTML = cats.map(c =>
-    `<button class="tab-btn${c===activeCategory?' active':''}" data-cat="${c}">${catLabel(c)}</button>`
-  ).join('');
-  wrap.querySelectorAll('.tab-btn').forEach(btn =>
-    btn.addEventListener('click', ()=>{ activeCategory=btn.dataset.cat; renderTabs(); renderItems(); })
-  );
-}
-
-const SVG_CUBE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`;
-
-function cardHTML(d, isAboveFold) {
-  const imgLoading = isAboveFold ? 'eager' : 'lazy';
-  const fetchPriority = isAboveFold ? 'fetchpriority="high"' : '';
-  const thumb = d.posterPath
-    ? `<img src="${d.posterPath}" alt="${d.name}" loading="${imgLoading}" decoding="async" ${fetchPriority}
-          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-       <span style="display:none;font-size:32px;width:100%;height:100%;align-items:center;justify-content:center;">${d.emoji}</span>`
-    : `<span style="font-size:32px;">${d.emoji}</span>`;
-  return `
-    <div class="menu-card${d.available?'':' unavailable'}" data-id="${d.id}"
-         role="button" tabindex="0" aria-label="View ${d.name}">
-      <div class="card-row">
-        <div class="card-thumb">
-          ${thumb}
-          ${d.glbPath?'<span class="ar-pill">AR</span>':''}
-        </div>
-        <div class="card-body">
-          <div class="name-row">
-            <span class="dish-name">${d.name}</span>
-            ${d.jp?`<span class="dish-jp">${d.jp}</span>`:''}
-          </div>
-          <div class="tags-row">${tagHTML(d)}</div>
-          <p class="dish-desc">${d.desc}</p>
-          <div class="card-footer">
-            <div class="dish-price"><span class="price-sym">₹</span>${d.price.toLocaleString('en-IN')}</div>
-            ${d.glbPath?`<button class="ar-btn" data-id="${d.id}">${SVG_CUBE} View in AR</button>`:''}
-          </div>
-        </div>
-      </div>
-    </div>`;
-}
-
-function renderItems() {
-  const filtered  = activeCategory==='all' ? allDishes : allDishes.filter(d=>d.category===activeCategory);
-  const container = document.getElementById('items-container');
-
-  let html = '';
-  if (activeCategory==='all') {
-    const grouped={};
-    filtered.forEach(d=>{ (grouped[d.category]=grouped[d.category]||[]).push(d); });
-    let cardIndex = 0;
-    html = Object.entries(grouped).map(([cat,items])=>
-      `<div class="section-label"><span></span>${catLabel(cat)}<span></span></div>
-       <div class="items-grid">${items.map(d => cardHTML(d, cardIndex++ < 4)).join('')}</div>`
-    ).join('');
-  } else {
-    html = `<div class="items-grid">${filtered.map((d,i) => cardHTML(d, i < 4)).join('')}</div>`;
-  }
-
-  container.innerHTML = html;
-
-  requestAnimationFrame(() => {
-    container.querySelectorAll('.menu-card').forEach(card => {
-      const d = allDishes.find(x=>x.id===card.dataset.id);
-      if (!d) return;
-      const doPrefetch = () => { prefetchGlb(d.glbPath); ensureModelViewerLoaded(); };
-      card.addEventListener('mouseenter', doPrefetch, { once:true, passive:true });
-      card.addEventListener('touchstart',  doPrefetch, { once:true, passive:true });
-      card.addEventListener('click', ()=>openModal(card.dataset.id));
-      card.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') openModal(card.dataset.id); });
-    });
-    container.querySelectorAll('.ar-btn').forEach(btn =>
-      btn.addEventListener('click', e=>{ e.stopPropagation(); openModal(btn.dataset.id); })
-    );
-  });
-}
-
-/* ─────────────────────────────────────────────
-   MODAL
-───────────────────────────────────────────── */
-const elMV            = document.getElementById('main-mv');
-const elMvWrapper     = document.getElementById('mv-wrapper');
+// Grab our layout wrappers
+const elMvWrapper    = document.getElementById('mv-wrapper');
 const elMvLoader      = document.getElementById('mv-loader');
 const elPhoto         = document.getElementById('modal-photo');
 const elArBadge       = document.getElementById('mv-ar-badge');
@@ -874,11 +552,12 @@ const elArLaunch      = document.getElementById('modal-ar-launch-btn');
 const elArNotSupported= document.getElementById('ar-not-supported');
 
 let currentDish = null;
+let elMV = null; // We will generate this dynamically now!
 
 function showLoader() { elMvLoader.classList.remove('hidden'); }
 function hideLoader() { elMvLoader.classList.add('hidden'); }
-function showMV()     { elMvWrapper.classList.add('mv-visible'); }
-function hideMV()     { elMvWrapper.classList.remove('mv-visible'); }
+function showMV()      { elMvWrapper.classList.add('mv-visible'); }
+function hideMV()      { elMvWrapper.classList.remove('mv-visible'); }
 
 function setPhoto(d) {
   if (d.posterPath) {
@@ -894,34 +573,10 @@ function setPhoto(d) {
 }
 
 function updateARButtonVisibility() {
+  if (!elMV) return;
   const canAR = elMV.canActivateAR;
   elArBtnWrap.style.display      = canAR ? 'flex' : 'none';
   elArNotSupported.style.display = canAR ? 'none' : 'block';
-}
-
-/* ── FIX: Apply scale + orbit synchronously, before any async work.
-   This ensures the model-viewer element already has the correct scale
-   attribute SET before the GLB src is assigned and parsing begins.
-   Combined with reveal="manual", the model will never flash at the
-   wrong size — it stays hidden until dismissPoster() is called below. */
-function applyDishToModelViewer(d) {
-  const s = (d.scale ?? 1).toFixed(6);
-
-  // 3D preview size
-  elMV.setAttribute('scale', `${s} ${s} ${s}`);
-
-  // AR real-world size — ar-scale="fixed" reads this CSS var
-  elMV.style.setProperty('--ar-scale', s);
-
-  // Per-dish camera angle for the 3D preview
-  elMV.setAttribute('camera-orbit', d.orbit ?? '0deg 75deg 105%');
-
-  // iOS USDZ
-  if (isIOS && d.usdzPath) {
-    elMV.setAttribute('ios-src', d.usdzPath);
-  } else {
-    elMV.removeAttribute('ios-src');
-  }
 }
 
 function openModal(id) {
@@ -929,16 +584,7 @@ function openModal(id) {
   if (!d) return;
   currentDish = d;
 
-  /* ── FIX STEP 1: Apply scale SYNCHRONOUSLY right now, before any
-     async work. The model-viewer element will have the correct scale
-     attribute before src is ever assigned. ── */
-  applyDishToModelViewer(d);
-
-  /* ── FIX STEP 2: Reset reveal to "manual" so the model stays
-     invisible until we call dismissPoster() after confirming scale. ── */
-  elMV.setAttribute('reveal', 'manual');
-
-  /* Populate text */
+  /* Populate text details */
   document.getElementById('modal-name').textContent = d.name;
   document.getElementById('modal-jp').textContent   = d.jp||'';
   document.getElementById('modal-desc').textContent = d.desc;
@@ -947,7 +593,7 @@ function openModal(id) {
   document.getElementById('modal-tags').innerHTML   = tagHTML(d);
   document.getElementById('modal-tags2').innerHTML  = tagHTML(d);
 
-  /* Reset viewer UI */
+  /* Reset viewer window UI state */
   hideMV();
   elArBadge.classList.remove('visible');
   elScaleInfo.textContent = '';
@@ -959,23 +605,81 @@ function openModal(id) {
   setPhoto(d);
   showLoader();
 
+  // Clear out any old model-viewer instance completely to kill layout memory
+  elMvWrapper.innerHTML = '';
+
   if (d.glbPath) {
     prefetchGlb(d.glbPath);
 
     ensureModelViewerLoaded().then(() => {
-      if (currentDish?.id !== d.id) return; // user closed modal
+      if (currentDish?.id !== d.id) return; // Closed early
 
-      /* Scale is already applied synchronously above — do NOT call
-         applyDishToModelViewer again here to avoid any flicker. */
+      const s = (d.scale ?? 1).toFixed(6);
 
-      if (elMV.getAttribute('src') === d.glbPath) {
-        /* Same GLB already loaded — trigger ready state immediately */
-        onMVLoaded(d);
-      } else {
-        /* New GLB — assign src and wait for load event.
-           Scale is already set, so the model parses at the right size. */
-        elMV.setAttribute('src', d.glbPath);
+      /* ── Create a pristine, isolated model-viewer element ── */
+      elMV = document.createElement('model-viewer');
+      elMV.id = 'main-mv';
+      elMV.setAttribute('ar', '');
+      elMV.setAttribute('ar-modes', 'webxr scene-viewer quick-look');
+      elMV.setAttribute('ar-placement', 'floor');
+      elMV.setAttribute('ar-scale', 'fixed');
+      elMV.setAttribute('xr-environment', '');
+      elMV.setAttribute('camera-controls', '');
+      elMV.setAttribute('touch-action', 'pan-y');
+      elMV.setAttribute('shadow-intensity', '1');
+      elMV.setAttribute('shadow-softness', '0.8');
+      elMV.setAttribute('environment-image', 'neutral');
+      elMV.setAttribute('exposure', '1');
+      elMV.setAttribute('min-camera-orbit', 'auto auto 60%');
+      elMV.setAttribute('max-camera-orbit', 'auto auto 140%');
+      elMV.setAttribute('interaction-prompt', 'none');
+      elMV.setAttribute('loading', 'eager');
+      
+      /* CRITICAL: Force initial size parameters into DOM BEFORE attaching src */
+      elMV.setAttribute('reveal', 'manual');
+      elMV.setAttribute('scale', `${s} ${s} ${s}`);
+      elMV.style.setProperty('--ar-scale', s);
+      elMV.setAttribute('camera-orbit', d.orbit ?? '0deg 75deg 105%');
+
+      if (isIOS && d.usdzPath) {
+        elMV.setAttribute('ios-src', d.usdzPath);
       }
+
+      // Add the hidden slot button required for Android launching
+      const slotBtn = document.createElement('button');
+      slotBtn.setAttribute('slot', 'ar-button');
+      slotBtn.id = 'mv-ar-slot-btn';
+      slotBtn.setAttribute('aria-hidden', 'true');
+      slotBtn.style.display = 'none';
+      elMV.appendChild(slotBtn);
+
+      // Listen for the custom engine lifecycle events
+      elMV.addEventListener('load', () => {
+        if (currentDish?.id === d.id) onMVLoaded(d);
+      });
+
+      elMV.addEventListener('error', () => {
+        hideLoader();
+        if (currentDish) setPhoto(currentDish);
+        elArLaunch.disabled = false;
+        elArLaunch.textContent = '⚠ Retry';
+      });
+
+      elMV.addEventListener('ar-status', e => {
+        const status = e.detail.status;
+        if (status === 'failed' || status === 'not-presenting') {
+          elArLaunch.disabled = false;
+          elArLaunch.textContent = '✶ View in AR';
+        }
+        if (status === 'session-started') {
+          elArLaunch.disabled = false;
+          elArLaunch.textContent = '✦ AR Active';
+        }
+      });
+
+      // Append to DOM context and pass source file 
+      elMvWrapper.appendChild(elMV);
+      elMV.setAttribute('src', d.glbPath);
     });
   } else {
     hideLoader();
@@ -986,14 +690,15 @@ function openModal(id) {
 }
 
 function onMVLoaded(d) {
-  if (currentDish?.id !== d.id) return;
+  if (currentDish?.id !== d.id || !elMV) return;
 
-  /* ── FIX STEP 3: Confirm scale is correct, then call dismissPoster()
-     to reveal the model atomically at the right size.
-     With reveal="manual", this is the ONLY moment the model becomes
-     visible — no flash, no wrong-size frame. ── */
-  applyDishToModelViewer(d);   // safety net re-confirm before reveal
-  elMV.dismissPoster();        // reveal now at correct size
+  // Final check to verify sizing configuration matches perfectly
+  const s = (d.scale ?? 1).toFixed(6);
+  elMV.setAttribute('scale', `${s} ${s} ${s}`);
+  elMV.style.setProperty('--ar-scale', s);
+  
+  // Hand control to model viewer to dismiss poster image instantly
+  elMV.dismissPoster();        
 
   hideLoader();
   elPhoto.style.display = 'none';
@@ -1003,142 +708,15 @@ function onMVLoaded(d) {
   updateARButtonVisibility();
 }
 
-/* ─── model-viewer events ─── */
-
-elMV.addEventListener('load', () => {
-  if (currentDish) onMVLoaded(currentDish);
-});
-
-elMV.addEventListener('error', () => {
-  hideLoader();
-  if (currentDish) setPhoto(currentDish);
-  elArLaunch.disabled = false;
-  elArLaunch.textContent = '⚠ Retry';
-});
-
-elMV.addEventListener('ar-status', e => {
-  const s = e.detail.status;
-  if (s === 'failed' || s === 'not-presenting') {
-    elArLaunch.disabled = false;
-    elArLaunch.textContent = '✶ View in AR';
-  }
-  if (s === 'session-started') {
-    elArLaunch.disabled = false;
-    elArLaunch.textContent = '✦ AR Active';
-  }
-});
-
-/* AR launch button */
-elArLaunch.addEventListener('click', () => {
-  if (elArLaunch.disabled || !currentDish) return;
-  const d = currentDish;
-
-  ensureModelViewerLoaded().then(() => {
-    if (currentDish?.id !== d.id) return;
-
-    if (!elMV.canActivateAR) {
-      elArNotSupported.style.display = 'block';
-      elArBtnWrap.style.display = 'none';
-      return;
-    }
-
-    const launch = () => {
-      if (currentDish?.id !== d.id) return;
-      try { elMV.activateAR(); } catch(e) { console.warn('activateAR:', e); }
-    };
-
-    if (elMvWrapper.classList.contains('mv-visible')) {
-      /* Model fully loaded — launch with zero delay */
-      launch();
-    } else {
-      /* Model still parsing — show indicator, launch on load */
-      elArLaunch.disabled = true;
-      elArLaunch.textContent = '⏳ Loading…';
-      elMV.addEventListener('load', () => {
-        elArLaunch.disabled = false;
-        elArLaunch.textContent = '✦ View On Table';
-        launch();
-      }, { once: true });
-    }
-  });
-});
-
-function safePause() { if (mvModuleReady && typeof elMV.pause === 'function') elMV.pause(); }
-function safePlay()  { if (mvModuleReady && typeof elMV.play  === 'function') elMV.play();  }
-
 function closeModal() {
   document.getElementById('modal-overlay').classList.remove('open');
   document.body.style.overflow = '';
   currentDish = null;
   safePause();
+  
+  // Wipe out the element instance on close to instantly free graphics memory
+  if (elMvWrapper) elMvWrapper.innerHTML = '';
+  elMV = null;
 }
-
-document.getElementById('modal-overlay').addEventListener('transitionend', () => {
-  if (document.getElementById('modal-overlay').classList.contains('open')) safePlay();
-});
-
-document.addEventListener('visibilitychange', () => {
-  document.hidden ? safePause() : safePlay();
-});
-
-document.getElementById('modal-close').addEventListener('click', closeModal);
-document.getElementById('modal-overlay').addEventListener('click', e => {
-  if (e.target === document.getElementById('modal-overlay')) closeModal();
-});
-document.addEventListener('keydown', e => { if (e.key==='Escape') closeModal(); });
-
-document.getElementById('lang-select').addEventListener('change', e => {
-  currentLang = e.target.value;
-  const t = I18N[currentLang]||I18N.en;
-  document.getElementById('ui-sub-tag').textContent  = t.sub;
-  document.getElementById('ui-ar-badge').textContent = t.badge;
-  allDishes = rawRows.map(rowToDish).filter(d=>d.name);
-  renderTabs(); renderItems();
-});
-
-/* ─────────────────────────────────────────────
-   INIT
-───────────────────────────────────────────── */
-async function init() {
-  const container = document.getElementById('items-container');
-  try {
-    const text = await csvPromise;
-    rawRows    = parseCSV(text);
-    allDishes  = rawRows.map(rowToDish).filter(d=>d.name);
-    if (!allDishes.length) throw new Error('No dishes found.');
-
-    preloadAboveFoldPosters(allDishes);
-    renderTabs();
-    renderItems();
-
-  } catch(err) {
-    console.error('Menu load error:', err);
-    container.innerHTML = `
-      <div class="state-box">
-        <p style="color:var(--crimson);font-family:var(--font-display);letter-spacing:2px;margin-bottom:10px">
-          Could not load menu
-        </p>
-        <p style="font-size:13px;line-height:1.8;color:var(--ink-light)">
-          Make sure your sheet is published:<br>
-          <strong>File → Share → Publish to web → CSV</strong><br><br>
-          Google Sheet Connected Successfully
-        </p>
-      </div>`;
-  }
-}
-
-document.addEventListener("contextmenu", e => { e.preventDefault(); });
-document.addEventListener("keydown", e => {
-  if (
-    e.key === "F12" ||
-    (e.ctrlKey && e.shiftKey && (e.key === "I" || e.key === "J" || e.key === "C")) ||
-    (e.ctrlKey && e.key === "u")
-  ) {
-    e.preventDefault();
-  }
-});
-
-init();
-</script>
-</body>
+</script></body>
 </html>
