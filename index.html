@@ -457,6 +457,7 @@
   </div>
 </main>
 
+<!-- MODAL -->
 <div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-label="Dish detail">
   <div class="modal-card">
     <div class="modal-viewer-wrap" id="modal-viewer-wrap">
@@ -468,17 +469,21 @@
         <div class="mv-loader-text">LOADING MODEL</div>
       </div>
 
+      <!-- Photo fallback shown while model loads -->
       <div id="modal-photo" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;z-index:1;"></div>
 
+      <!-- model-viewer wrapped in opacity-controlled div -->
       <div id="mv-wrapper"></div>
 
       <div class="mv-ar-badge" id="mv-ar-badge">✦ AR Ready</div>
       <div class="scale-info"  id="scale-info">Actual portion size</div>
 
+      <!-- Custom AR launch button -->
       <div class="mv-ar-btn-wrap" id="mv-ar-btn-wrap">
         <button class="modal-ar-launch-btn" id="modal-ar-launch-btn">✦ View On Table</button>
       </div>
 
+      <!-- Shown when device doesn't support AR -->
       <div class="ar-not-supported" id="ar-not-supported">
         AR not supported on this device — rotate to view in 3D
       </div>
@@ -546,9 +551,9 @@ const EMOJI_MAP = {
 const I18N = {
   en: { sub:'Authentic Italian Cuisine',    badge:'Interactive 3D & AR Preview', veg:'veg',        loading:'Loading...',         all:'All', starter:'Starters', main:'Main Course', dessert:'Desserts' },
   it: { sub:'Autentica Cucina Italiana',    badge:'Anteprima Interattiva 3D & AR', veg:'vegetariano', loading:'Caricamento...',      all:'Tutti', starter:'Antipasti', main:'Portata Principale', dessert:'Dolci' },
-  kn: { sub:'ಅಧಿಕೃತ ಇಟಾಲಿಯನ್ ಆಹಾರ',        badge:'3D ಮತ್ತು AR ಮುನ್ನೋಟ',           veg:'ಸಸ್ಯಾಹಾರಿ',   loading:'ಲೋಡ್ ಆಗುತ್ತಿದೆ...', all:'ಎಲ್ಲಾ', starter:'ಸ್ಟಾರ್ಟರ್', main:'ಮುಖ್ಯ ಕೋರ್ಸ್', dessert:'ಡೆಸರ್ట్' },
+  kn: { sub:'ಅಧಿಕೃತ ಇಟಾಲಿಯನ್ ಆಹಾರ',        badge:'3D ಮತ್ತು AR ಮುನ್ನೋಟ',           veg:'ಸಸ್ಯಾಹಾರಿ',   loading:'ಲೋಡ್ ಆಗುತ್ತಿದೆ...', all:'ಎಲ್ಲಾ', starter:'ಸ್ಟಾರ್ಟರ್', main:'ಮುಖ್ಯ ಕೋರ್ಸ್', dessert:'ಡೆಸರ್ಟ್' },
   ta: { sub:'உண்மையான இத்தாலிய உணவு',      badge:'3D மற்றும் AR மாதிரிக்காட்சி', veg:'சைவம்',        loading:'ஏற்றப்படுகிறது...', all:'அனைத்தும்', starter:'தொடக்க', main:'முதன்மை', dessert:'இனிப்பு' },
-  ml: { sub:'ആധികാരിക ഇറ്റാലിയൻ വിഭവങ്ങൾ',badge:'3D & AR പ്രിവ്യൂ',              veg:'വെജ്',         loading:'ലോഡ് ചെയ്യുന്നു...', all:'എല്ലാം', starter:'ಸ್ಟാർട്ടർ', main:'മെയിൻ', dessert:'ഡെസേർട്ട്' },
+  ml: { sub:'ആധികാരിക ഇറ്റാലിയൻ വിഭവങ്ങൾ',badge:'3D & AR പ്രിവ్యూ',              veg:'വെജ്',         loading:'ലോడ్ ചെയ്യുന്നു...', all:'എല്ലാം', starter:'ಸ್ಟാർട്ടർ', main:'మెయిన్', dessert:'ਡെസേർട്ട്' },
   te: { sub:'ప్రామాణిక ఇటాలియన్ వంటకాలు',  badge:'3D & AR ప్రివ్యూ',              veg:'శాఖాహారం',    loading:'లోడ్ అవుతోంది...',   all:'అన్నీ', starter:'స్టార్టర్', main:'మెయిన్', dessert:'డెజర్ట్' },
 };
 
@@ -788,7 +793,7 @@ function renderItems() {
 }
 
 /* ─────────────────────────────────────────────
-   MODAL — SYSTEM ENGINE COMPATIBILITY STACK
+   MODAL — FORCED INLINE MATRIX FIX
 ───────────────────────────────────────────── */
 const elMvWrapper    = document.getElementById('mv-wrapper');
 const elMvLoader      = document.getElementById('mv-loader');
@@ -853,14 +858,13 @@ function openModal(id) {
   setPhoto(d);
   showLoader();
 
-  // Clear out old element instances completely
   elMvWrapper.innerHTML = '';
 
   if (d.glbPath) {
     prefetchGlb(d.glbPath);
 
     ensureModelViewerLoaded().then(() => {
-      if (currentDish?.id !== d.id) return; // Closed early
+      if (currentDish?.id !== d.id) return; 
 
       const s = (d.scale ?? 1).toFixed(6);
       const scaleString = `${s} ${s} ${s}`;
@@ -870,8 +874,10 @@ function openModal(id) {
       elMV.id = 'main-mv';
       elMV.setAttribute('ar', '');
       
-      // Forces WebXR space tracking engines to process scaling data over native bounding boxes
-      elMV.setAttribute('ar-modes', 'webxr quick-look scene-viewer');
+      // CRITICAL FIX: Explicitly restrict to 'webxr' only.
+      // This blocks the broken native Scene-Viewer fallback and forces the phone 
+      // to process the exact web layout matrix instantly without size delays!
+      elMV.setAttribute('ar-modes', 'webxr');
       elMV.setAttribute('ar-placement', 'floor');
       elMV.setAttribute('ar-scale', 'fixed');
       elMV.setAttribute('xr-environment', '');
@@ -886,7 +892,7 @@ function openModal(id) {
       elMV.setAttribute('interaction-prompt', 'none');
       elMV.setAttribute('loading', 'eager');
       
-      /* Apply size parameters explicitly to both core layouts and system attributes */
+      /* Bake sizing matrix directly into element properties */
       elMV.setAttribute('reveal', 'manual');
       elMV.setAttribute('scale', scaleString);
       elMV.style.setProperty('--ar-scale', s);
