@@ -546,9 +546,9 @@ const EMOJI_MAP = {
 const I18N = {
   en: { sub:'Authentic Italian Cuisine',    badge:'Interactive 3D & AR Preview', veg:'veg',        loading:'Loading...',         all:'All', starter:'Starters', main:'Main Course', dessert:'Desserts' },
   it: { sub:'Autentica Cucina Italiana',    badge:'Anteprima Interattiva 3D & AR', veg:'vegetariano', loading:'Caricamento...',      all:'Tutti', starter:'Antipasti', main:'Portata Principale', dessert:'Dolci' },
-  kn: { sub:'ಅಧಿಕೃತ ಇಟಾಲಿಯನ್ ಆಹಾರ',        badge:'3D ಮತ್ತು AR ಮುನ್ನೋಟ',           veg:'ಸಸ್ಯಾಹಾರಿ',   loading:'ಲೋಡ್ ಆಗುತ್ತಿದೆ...', all:'ಎಲ್ಲಾ', starter:'ಸ್ಟಾರ್ಟರ್', main:'ಮುಖ್ಯ ಕೋರ್ಸ್', dessert:'ಡೆಸರ್ಟ್' },
+  kn: { sub:'ಅಧಿಕೃತ ಇಟಾಲಿಯನ್ ಆಹಾರ',        badge:'3D ಮತ್ತು AR ಮುನ್ನೋಟ',           veg:'ಸಸ್ಯಾಹಾರಿ',   loading:'ಲೋಡ್ ಆಗುತ್ತಿದೆ...', all:'ಎಲ್ಲಾ', starter:'ಸ್ಟಾರ್ಟರ್', main:'ಮುಖ್ಯ ಕೋರ್ಸ್', dessert:'ಡೆಸರ್ట్' },
   ta: { sub:'உண்மையான இத்தாலிய உணவு',      badge:'3D மற்றும் AR மாதிரிக்காட்சி', veg:'சைவம்',        loading:'ஏற்றப்படுகிறது...', all:'அனைத்தும்', starter:'தொடக்க', main:'முதன்மை', dessert:'இனிப்பு' },
-  ml: { sub:'ആധികാരിക ഇറ്റാലിയൻ വിഭവങ്ങൾ',badge:'3D & AR പ്രിവ്യൂ',              veg:'വെജ്',         loading:'ലോഡ് ചെയ്യുന്നു...', all:'എല്ലാം', starter:'സ്റ്റാർട്ടർ', main:'മെയിൻ', dessert:'ഡെസേർട്ട്' },
+  ml: { sub:'ആധികാരിക ഇറ്റാലിയൻ വിഭവങ്ങൾ',badge:'3D & AR പ്രിവ്യൂ',              veg:'വെജ്',         loading:'ലോഡ് ചെയ്യുന്നു...', all:'എല്ലാം', starter:'ಸ್ಟാർട്ടർ', main:'മെയിൻ', dessert:'ഡെസേർട്ട്' },
   te: { sub:'ప్రామాణిక ఇటాలియన్ వంటకాలు',  badge:'3D & AR ప్రివ్యూ',              veg:'శాఖాహారం',    loading:'లోడ్ అవుతోంది...',   all:'అన్నీ', starter:'స్టార్టర్', main:'మెయిన్', dessert:'డెజర్ట్' },
 };
 
@@ -788,7 +788,7 @@ function renderItems() {
 }
 
 /* ─────────────────────────────────────────────
-   MODAL — DYNAMIC RE-CREATION (NO-FLICKER FIX)
+   MODAL — SYSTEM ENGINE COMPATIBILITY STACK
 ───────────────────────────────────────────── */
 const elMvWrapper    = document.getElementById('mv-wrapper');
 const elMvLoader      = document.getElementById('mv-loader');
@@ -853,7 +853,7 @@ function openModal(id) {
   setPhoto(d);
   showLoader();
 
-  // Clear out any old model-viewer instance completely to kill layout memory
+  // Clear out old element instances completely
   elMvWrapper.innerHTML = '';
 
   if (d.glbPath) {
@@ -863,12 +863,15 @@ function openModal(id) {
       if (currentDish?.id !== d.id) return; // Closed early
 
       const s = (d.scale ?? 1).toFixed(6);
+      const scaleString = `${s} ${s} ${s}`;
 
-      /* ── Create a pristine, isolated model-viewer element ── */
+      /* ── Create pristine, isolated model-viewer element ── */
       elMV = document.createElement('model-viewer');
       elMV.id = 'main-mv';
       elMV.setAttribute('ar', '');
-      elMV.setAttribute('ar-modes', 'webxr scene-viewer quick-look');
+      
+      // Forces WebXR space tracking engines to process scaling data over native bounding boxes
+      elMV.setAttribute('ar-modes', 'webxr quick-look scene-viewer');
       elMV.setAttribute('ar-placement', 'floor');
       elMV.setAttribute('ar-scale', 'fixed');
       elMV.setAttribute('xr-environment', '');
@@ -883,9 +886,9 @@ function openModal(id) {
       elMV.setAttribute('interaction-prompt', 'none');
       elMV.setAttribute('loading', 'eager');
       
-      /* CRITICAL: Force initial size parameters into DOM BEFORE attaching src */
+      /* Apply size parameters explicitly to both core layouts and system attributes */
       elMV.setAttribute('reveal', 'manual');
-      elMV.setAttribute('scale', `${s} ${s} ${s}`);
+      elMV.setAttribute('scale', scaleString);
       elMV.style.setProperty('--ar-scale', s);
       elMV.setAttribute('camera-orbit', d.orbit ?? '0deg 75deg 105%');
 
@@ -893,7 +896,6 @@ function openModal(id) {
         elMV.setAttribute('ios-src', d.usdzPath);
       }
 
-      // Add the hidden slot button required for Android launching
       const slotBtn = document.createElement('button');
       slotBtn.setAttribute('slot', 'ar-button');
       slotBtn.id = 'mv-ar-slot-btn';
@@ -901,7 +903,6 @@ function openModal(id) {
       slotBtn.style.display = 'none';
       elMV.appendChild(slotBtn);
 
-      // Listen for the custom engine lifecycle events
       elMV.addEventListener('load', () => {
         if (currentDish?.id === d.id) onMVLoaded(d);
       });
@@ -925,7 +926,6 @@ function openModal(id) {
         }
       });
 
-      // Append to DOM context and pass source file 
       elMvWrapper.appendChild(elMV);
       elMV.setAttribute('src', d.glbPath);
     });
@@ -940,12 +940,10 @@ function openModal(id) {
 function onMVLoaded(d) {
   if (currentDish?.id !== d.id || !elMV) return;
 
-  // Final check to verify sizing configuration matches perfectly
   const s = (d.scale ?? 1).toFixed(6);
   elMV.setAttribute('scale', `${s} ${s} ${s}`);
   elMV.style.setProperty('--ar-scale', s);
   
-  // Hand control to model viewer to dismiss poster image instantly
   elMV.dismissPoster();        
 
   hideLoader();
