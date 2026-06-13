@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Explore Italy</title>
+<title>Explore Korea</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,13 +11,13 @@
 
 <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 
-<link rel="preload" as="image" href="ExploreItally/amalficoast/amalficoast.png" fetchpriority="high">
+<link rel="preload" as="image" href="ExploreKorea/Cheonchuksa_Temple/Cheonchuksa_Temple.png" fetchpriority="high">
 
 <style>
 :root {
-  --ink:   #080604;
+  --ink:    #080604;
   --paper: #F0E8D5;
-  --gold:  #B8973A;
+  --gold:   #B8973A;
   --gold2: #D4AE52;
   --ff-en: 'Cormorant Garamond', 'Palatino Linotype', Georgia, serif;
   --ff-ui: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
@@ -111,23 +111,9 @@ body {
   transition: opacity .45s;
 }
 
-/* Poster hidden by default — shown before 3D activates */
-.model-wrap:not(.active) .model-poster {
-  opacity: 1;
-}
-.model-wrap.active .model-poster {
-  opacity: 0;
-}
+.model-wrap:not(.active) .model-poster { opacity: 1; }
+.model-wrap.active .model-poster { opacity: 0; }
 
-/*
-  KEY FIX FOR PINCH ZOOM IN AR:
-  ─────────────────────────────
-  1. touch-action: none  → lets model-viewer / WebXR capture ALL touch
-     events including multi-finger pinch. Do NOT use pan-y here.
-  2. ar-scale="auto"     → set on the element so WebXR auto-scales AND
-     allows the user to pinch-resize the model in AR.
-  3. --touch-action: none inside the shadow DOM (model-viewer CSS var).
-*/
 model-viewer {
   position: absolute;
   inset: 0;
@@ -139,7 +125,6 @@ model-viewer {
   transition: opacity .4s;
   background: transparent;
   --poster-color: transparent;
-  /* Critical: allow all touch gestures inside model-viewer */
   touch-action: none;
   --touch-action: none;
 }
@@ -151,7 +136,6 @@ model-viewer > [slot="ar-button"] { display: none !important; }
   pointer-events: auto;
 }
 
-/* Pinch zoom hint badge */
 .ar-badge {
   position: absolute;
   right: 12px;
@@ -170,32 +154,45 @@ model-viewer > [slot="ar-button"] { display: none !important; }
 }
 .ar-badge.visible { opacity: 1; transform: translateY(0); }
 
-.capture-btn {
+.media-tray {
   position: absolute;
   bottom: 18px;
   right: 18px;
   z-index: 20;
-  width: 58px;
-  height: 58px;
+  display: flex;
+  gap: 10px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .3s ease;
+}
+.model-wrap.active .media-tray { opacity: 1; pointer-events: auto; }
+
+.capture-btn, .record-btn {
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   border: 2px solid rgba(255,255,255,.9);
-  background: rgba(255,255,255,.18);
+  background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
+  font-size: 20px;
   color: white;
   cursor: pointer;
-  opacity: 0;
-  pointer-events: none;
-  transition: all .3s ease;
+  transition: all .2s ease;
 }
-.model-wrap.active .capture-btn {
-  opacity: 1;
-  pointer-events: auto;
+.capture-btn:active, .record-btn:active { transform: scale(.9); }
+
+.record-btn.recording {
+  background: rgba(220, 53, 69, 0.85);
+  border-color: #ffcbd1;
+  animation: recPulse 1.5s infinite alternate;
 }
-.capture-btn:active { transform: scale(.92); }
+@keyframes recPulse {
+  from { box-shadow: 0 0 0 0px rgba(220, 53, 69, 0.6); }
+  to { box-shadow: 0 0 0 12px rgba(220, 53, 69, 0); }
+}
 
 .pinch-hint {
   position: absolute;
@@ -363,7 +360,7 @@ model-viewer > [slot="ar-button"] { display: none !important; }
 <a href="FunZone.html" class="back-btn">← Back</a>
 
 <header class="nav-header">
-  <h1>Explore Italy</h1>
+  <h1>Explore Korea</h1>
   <p>Augmented Reality Landmarks</p>
 </header>
 
@@ -373,34 +370,34 @@ model-viewer > [slot="ar-button"] { display: none !important; }
 <script>
 const LANDMARKS = [
   {
-    name:    'Amalfi Coast',
-    city:    'Italy',
-    folder:  'amalficoast',
-    file:    'amalficoast',
+    name:    'Cheonchuksa Temple',
+    city:    'Korea',
+    folder:  'Cheonchuksa_Temple',
+    file:    'Cheonchuksa_Temple',
     arScale: .5,
     orbit:   '30deg 65deg 110%',
   },
   {
-    name:    'Colosseum',
-    city:    'Italy',
-    folder:  'colosseum',
-    file:    'colosseum',
+    name:    'Seokguram Temple',
+    city:    'Korea',
+    folder:  'Seokguram_Temple',
+    file:    'Seokguram_Temple',
     arScale: .5,
     orbit:   '20deg 60deg 105%',
   },
   {
-    name:    'Duomo Museum',
-    city:    'Italy',
-    folder:  'duomo-museum',
-    file:    'duomo-museum',
+    name:    'Seoul Tower',
+    city:    'Korea',
+    folder:  'seoul_tower',
+    file:    'seoul_tower',
     arScale: .5,
     orbit:   '0deg 55deg 105%',
   },
   {
-    name:    'Leaning Tower of Pisa',
-    city:    'Italy',
-    folder:  'leaning-tower-of-pisa',
-    file:    'leaning-tower-of-pisa',
+    name:    'Traditional Bridge',
+    city:    'Korea',
+    folder:  'traditional_bridge',
+    file:    'traditional_bridge',
     arScale: .5,
     orbit:   '15deg 60deg 110%',
   },
@@ -413,29 +410,13 @@ const grid   = document.getElementById('grid');
 const dotsEl = document.getElementById('dots');
 
 LANDMARKS.forEach((lm, idx) => {
-  const base     = `./ExploreItally/${lm.folder}/${lm.file}`;
+  const base     = `./ExploreKorea/${lm.folder}/${lm.file}`;
   const glbPath  = `${base}.glb`;
   const usdzPath = `${base}.usdz`;
   const imgPath  = `${base}.png`;
 
   const s = (lm.arScale || 1).toFixed(6);
 
-  /*
-    AR MODES ORDER:
-    ───────────────
-    iOS   → quick-look first (ARKit, supports pinch-to-scale natively)
-    Android → webxr first (WebXR, supports pinch-to-scale in AR session)
-
-    PINCH ZOOM IN AR:
-    ─────────────────
-    • iOS AR Quick Look: pinch-to-scale is built-in, always works.
-    • Android WebXR: pinch-to-scale works when ar-scale="auto" is set
-      (NOT "fixed"). With "auto", the user can pinch to resize in AR.
-    • Android Scene Viewer: scale is fixed by the app, no pinch resize.
-
-    We use ar-scale="auto" so WebXR allows pinch resizing.
-    The initial size is controlled by the `scale` attribute fallback.
-  */
   const arModes = IS_IOS
     ? 'quick-look webxr scene-viewer'
     : 'webxr scene-viewer quick-look';
@@ -499,7 +480,12 @@ LANDMARKS.forEach((lm, idx) => {
       </div>
 
       <div class="ar-badge" id="badge-${idx}">✦ AR Ready</div>
-      <button class="capture-btn" id="capture-${idx}">📸</button>
+       
+      <div class="media-tray">
+        <button class="capture-btn" id="capture-${idx}" title="Take Screenshot">📸</button>
+        <button class="record-btn" id="record-${idx}" title="Record Video">🎥</button>
+      </div>
+
       <div class="pinch-hint">⟺ Pinch to Scale · Drag to Rotate · AR Ready</div>
       <div class="ar-no-support" id="nosup-${idx}">AR not available on this device</div>
     </div>
@@ -531,9 +517,12 @@ LANDMARKS.forEach((lm, idx) => {
   const wrap       = card.querySelector(`#wrap-${idx}`);
   const btn3d      = card.querySelector(`#btn3d-${idx}`);
   const captureBtn = card.querySelector(`#capture-${idx}`);
+  const recordBtn  = card.querySelector(`#record-${idx}`);
   const btnAR      = card.querySelector(`#btnar-${idx}`);
 
   let modelReady = false;
+  let mediaRecorder = null;
+  let recordedChunks = [];
 
   mv.addEventListener('progress', e => {
     const pct = Math.round((e.detail.totalProgress || 0) * 100);
@@ -576,7 +565,6 @@ LANDMARKS.forEach((lm, idx) => {
   mv.addEventListener('ar-status', e => {
     const st = e.detail.status;
     if (st === 'session-started') {
-      /* AR session is live — ensure touch-action:none so pinch works */
       mv.style.touchAction = 'none';
     }
     if (st === 'failed') {
@@ -589,13 +577,6 @@ LANDMARKS.forEach((lm, idx) => {
     }
   });
 
-  /*
-    PINCH ZOOM — prevent card scroll from stealing touch events
-    ─────────────────────────────────────────────────────────────
-    When model-viewer is active (3D mode), block touchstart on the
-    wrap so the browser's pan-x scroll on the grid doesn't intercept
-    multi-finger pinch gestures before model-viewer gets them.
-  */
   wrap.addEventListener('touchstart', e => {
     if (wrap.classList.contains('active') && e.touches.length > 1) {
       e.stopPropagation();
@@ -622,25 +603,79 @@ LANDMARKS.forEach((lm, idx) => {
     btn3d.textContent = active ? '✕ 2D' : '⬡ 3D';
   });
 
+  /* 1. FIXED SCREENSHOT FEATURE */
   captureBtn.addEventListener('click', async () => {
+    if (!modelReady) return;
     try {
-      const canvas = document.createElement('canvas');
-      const scale  = window.devicePixelRatio || 2;
-      canvas.width  = mv.clientWidth  * scale;
-      canvas.height = mv.clientHeight * scale;
-      const ctx = canvas.getContext('2d');
-      ctx.scale(scale, scale);
-      const internalCanvas = mv.shadowRoot.querySelector('canvas');
-      if (!internalCanvas) { alert('Screenshot not available'); return; }
-      ctx.drawImage(internalCanvas, 0, 0);
+      // Use model-viewer's built-in image exporter to preserve high quality 
+      const dataUrl = mv.toDataURL('image/png');
+      
       const link = document.createElement('a');
-      link.download = `${lm.name}-AR.png`;
-      link.href = canvas.toDataURL('image/png');
+      link.download = `${lm.name.replace(/\s+/g, '_')}_Snapshot.png`;
+      link.href = dataUrl;
       link.click();
     } catch (err) {
       console.error(err);
-      alert('Screenshot failed');
+      alert('Screenshot capturing error occurred.');
     }
+  });
+
+  /* 2. VIDEO RECORDER FEATURE */
+  recordBtn.addEventListener('click', () => {
+    const internalCanvas = mv.shadowRoot.querySelector('canvas');
+    if (!internalCanvas) { alert('Recording target missing.'); return; }
+
+    if (mediaRecorder && mediaRecorder.state === "recording") {
+      mediaRecorder.stop();
+      return;
+    }
+
+    recordedChunks = [];
+    const stream = internalCanvas.captureStream(30);
+    
+    let options = { mimeType: 'video/webm;codecs=vp9' };
+    if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+      options = { mimeType: 'video/webm;codecs=vp8' };
+    }
+    if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+      options = { mimeType: 'video/mp4' }; 
+    }
+
+    try {
+      mediaRecorder = new MediaRecorder(stream, options);
+    } catch (e) {
+      console.error("MediaRecorder creation error:", e);
+      alert("Recording not fully supported on this mobile configuration.");
+      return;
+    }
+
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data && e.data.size > 0) {
+        recordedChunks.push(e.data);
+      }
+    };
+
+    mediaRecorder.onstart = () => {
+      recordBtn.classList.add('recording');
+      recordBtn.textContent = '🛑';
+    };
+
+    mediaRecorder.onstop = () => {
+      recordBtn.classList.remove('recording');
+      recordBtn.textContent = '🎥';
+      
+      const blob = new Blob(recordedChunks, { type: options.mimeType });
+      const url = URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.download = `${lm.name.replace(/\s+/g, '_')}_Record.${blob.type.includes('mp4') ? 'mp4' : 'webm'}`;
+      link.href = url;
+      link.click();
+      
+      setTimeout(() => URL.revokeObjectURL(url), 100);
+    };
+
+    mediaRecorder.start();
   });
 
   btnAR.addEventListener('click', () => {
@@ -650,7 +685,7 @@ LANDMARKS.forEach((lm, idx) => {
   });
 });
 
-/* Scroll dots */
+/* Scroll dots mapping logic */
 const allDots = dotsEl.querySelectorAll('.dot');
 let rafPending = false;
 
@@ -668,15 +703,6 @@ grid.addEventListener('scroll', () => {
     allDots.forEach((d, di) => d.classList.toggle('active', di === best));
   });
 }, { passive: true });
-  /* ===========================
-       DISABLE RIGHT CLICK & DEV TOOLS
-    ============================ */
-    document.addEventListener('contextmenu', (e) => e.preventDefault());
-    document.onkeydown = function(e) {
-      if (e.keyCode === 123) return false; // F12
-      if (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67 || e.keyCode === 75)) return false;
-      if (e.ctrlKey && e.keyCode === 85) return false; // Ctrl+U
-    };
 </script>
 
 </body>
